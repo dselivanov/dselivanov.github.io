@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Sparkr on Data Science notes</title>
+    <link>/tags/sparkr/</link>
+    <description>Recent content in Sparkr on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Sat, 20 Feb 2016 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/sparkr/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Read from hdfs with R. Brief overview of SparkR.</title>
+      <link>/post/r-read-hdfs/</link>
+      <pubDate>Sat, 20 Feb 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/r-read-hdfs/</guid>
+      <description>Disclaimer: originally I planned to write post about R functions/packages which allow to read data from hdfs (with benchmarks), but in the end it became more like an overview of SparkR capabilities.
+Nowadays working with &amp;ldquo;big data&amp;rdquo; almost always means working with hadoop ecosystem. A few years ago this also meant that you also would have to be a good java programmer to work in such environment - even simple word count program took several dozens of lines of code.</description>
+    </item>
+    
+  </channel>
+</rss>

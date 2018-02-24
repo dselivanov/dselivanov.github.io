@@ -1,0 +1,354 @@
+---
+title: Matrix factorization for recommender systems (part 2)
+author: Dmitriy Selivanov
+date: '2017-06-28'
+slug: 2017-06-28-matrix-factorization-for-recommender-systems-part-2
+tags:
+  - R
+  - recommender-systems
+description: Applications of Weigted Alternating Least Squares to recommender systems
+draft: false
+keywords:
+  - recommender system
+  - implicit feedback
+type: post
+mathjax: true
+---
+```{r global_options, include=FALSE}
+library(knitr)
+library(methods)
+opts_chunk$set(cache=TRUE, eval = FALSE)
+```
+
+In [previous post](http://dsnotes.com/post/2017-05-28-matrix-factorization-for-recommender-systems/) I explained Weigted Alternating Least Squares algorithm for matrix factorization. This post will be more practical - we will build a model which will recommend artists recommendations based on history of track listenings. 
+
+# Design of evaluation and cross validation
+
+Before we will go to modeling we need to discuss how we will validate our model. At the very beginning I would like to highlight that final validation should be done online through A/B testing (or more advanced "bandit" approach). It is very hard to design offline validation wich will be perfectly correlated with online testing. Here however we will focus on offline validation since it necessary for good choice of the hyperparameters of any machine learning model.
+
+Before building recommender system **data scientists should define evaluation metric which is highly correlated with business targets**. This is ticky part. For example solutions of the Netflix prize competiton were evaluated by RMSE of the rating predictions and ground truth ratings. But does RMSE really make sense? How it is correlated with business goals? Answers on these questions are not obvious.
+
+Thinking logically we can come to the conclusion that in the simplest (but widely used) scenario goal is just to increase probabilyty of the click to product (implying this could lead purchase or engagement).
+
+In this case task is to show **small list** of highly relevant items. Which means algorithm should really **care only about precision**. Also list of recommended items usually should be ordered, so most relevant items appear at first places and hence have more chance to be seen. This turns optimization into [**"Learning to rank"** problem](https://en.wikipedia.org/wiki/Learning_to_rank) and usage of ranking-specialized evaluation measures. Worth to spot several which are widely used in industry:
+
+1. [Precision](https://en.wikipedia.org/wiki/Precision_and_recall) and precision at `K` (`precision@k`). `precision@k` means that we measure precision only for top `K` elements of our ranked list.
+1. [Mean average precision (MAP)](https://en.wikipedia.org/wiki/Information_retrieval#Mean_average_precision) and Mean average precision at `K` (`map@k`). This metric takes into consideration order of items in retrieved list, but for this metrix all items are equally relevant.
+1. [Normalized Discounted Cumulative Gain](https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Normalized_DCG)(`ndcg`) and `ndcg@k`. This metrices have same sense as `map` and `map@k`, but also take into account fact that items may be not equally relevant.
+1. [Mean reciprocal rank](https://en.wikipedia.org/wiki/Mean_reciprocal_rank)
+
+While we  can't directly optimize metrices above with W-ALS algorithm descibed in [first part](http://dsnotes.com/post/2017-05-28-matrix-factorization-for-recommender-systems/), we can use cross-validation to pick hyperparameters which will maximize target metric. Also need to take into account that **ususally data has time dimension**. In this case validation should use "future" data.
+
+# Lastfm dataset
+
+Our goal for this post is to create artist recommendations using history of listenings. We will use [lastfm-360K](http://ocelma.net/MusicRecommendationDataset/lastfm-360K.html) dataset and [reco package](https://github.com/dselivanov/reco). Dataset contains `<user, artist, plays>` tuples (for ~360,000 users) collected from Last.fm API. Archive from link above contains several files, but the only needed is `usersha1-artmbid-artname-plays.tsv`. This is implicit feedback dataset - we only observe actions from user and all feedback is positive. Possible well suited metrices are `ndcg@k`, `map@k`
+
+```{r, "read-data"}
+set.seed(1)
+library(data.table)
+raw_data = fread("~/Downloads/lastfm-dataset-360K/usersha1-artmbid-artname-plays.tsv", showProgress = FALSE)
+setnames(raw_data, c("user_id", "artist_id", "artist_name", "number_plays"))
+head(raw_data)
+```
+
+## Preparing data
+
+In order to use WALS algorithm we need to make sparse matrix from the data: users should be in rows, artists should be in columns and values should be number of plays. Data is in unnormalized form, so let's reshape it a little bit. 
+
+First we need to create another incremental user id:
+```{r, "user-encoding"}
+user_encoding = raw_data[, .(uid = .GRP), keyby = user_id]
+print(user_encoding)
+```
+And almost same procedure for items (item = artist in our case):
+```{r, "item-encoding"}
+item_encoding = raw_data[, .(iid = .GRP, artist_name = artist_name[[1]]), keyby = artist_id]
+print(item_encoding)
+```
+As we can see data is little bit noisy (few strange `artist_id` and `user_id` fields), but hope it won't hurt model too much.
+
+Now we will construct user-item interaction dataset:
+```{r, "dt-user-time"}
+# drop artist name - already have it in item_encodings
+raw_data[, artist_name := NULL]
+# just join raw_data and user/item encodings
+dt = user_encoding[raw_data, .(artist_id, uid, number_plays), on = .(user_id = user_id)]
+dt = item_encoding[dt, .(iid, uid, number_plays), on = .(artist_id = artist_id)]
+# raw_data not needed anymore
+rm(raw_data)
+dt
+```
+
+Great, finally we got data in proper format and can focus on modeling part.
+
+## Splitting data into train and cross-validation
+
+As mentioned before usually data has time dimension. In our case however there is no such information. So we will take random set of 1000 users as test set. For these users will use 50% of listenings as given data (history of listenings) and will try to predict rest of user tastes. Defining splitting proportion is up to researcher.
+
+```{r, "matrix-user-item"}
+library(Matrix)
+X = sparseMatrix(i = dt$uid, j = dt$iid, x = dt$number_plays, 
+                 dimnames = list(user_encoding$user_id, item_encoding$artist_name))
+N_CV = 1000L
+cv_uid = sample(nrow(user_encoding), N_CV)
+```
+And now create matrices for train and cross-validation:
+```{r, "matrix-train-cv"}
+X_train = X[-cv_uid, ]
+dim(X_train)
+X_cv = X[cv_uid, ]
+dim(X_cv)
+rm(X)
+```
+
+Last thing to do is to split CV data into history and actual validation. For each user we will take random half of listenings and will them treat as history and rest as future. This will be easier to perform using data tables:
+
+```{r, "cv_hist_future_split"}
+# convert matrix to COO format and then to data.table
+temp = as(X_cv, "TsparseMatrix")
+# note that indices in 'TsparseMatrix' are 0-based!
+temp = data.table(i = temp@i, j = temp@j, x = temp@x)
+# mark 50% as history
+temp[, history := sample(c(TRUE, FALSE), .N, replace = TRUE, prob = c(0.5, 0.5)), by = i]
+head(temp)
+X_cv_history = temp[history == TRUE]
+X_cv_future = temp[history == FALSE]
+rm(temp)
+# and convert back to sparse matrices
+# indices in 'TsparseMatrix' are 0-based, so setting `index1 = FALSE`
+X_cv_history = sparseMatrix( i = X_cv_history$i, j = X_cv_history$j, x = X_cv_history$x, 
+                             dims = dim(X_cv), dimnames = dimnames(X_cv), index1 = FALSE)
+X_cv_future = sparseMatrix( i = X_cv_future$i, j = X_cv_future$j, x = X_cv_future$x, 
+                             dims = dim(X_cv), dimnames = dimnames(X_cv), index1 = FALSE)
+```
+
+## Validation strategy
+
+As discussed in previous post W-ALS algorithm minimizes loss of the following form:
+
+`$$loss = L = \sum_{ u = user} \sum_{i = item} C_{ui}(P_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$`
+
+Where $C_{ui}$ (confidence) has form of $C = 1 + f(R)$ ($R$ is raw interactions score). And usually good choice is to simply let $C = 1 + \alpha R$. As we can see such model will have several hyperparameters:
+
+1. rank
+1. $\alpha$
+1. $\lambda$
+
+Obviously as model minimizes loss we could imply that the smaller the loss the better the model. **But(!)** the most interesting part is that **we won't be able to compare models with different $\alpha$ since loss depends on $\alpha$**! And we can't say that one model better than other just because it has lower loss on validation set - these losses will have different scales. However using value of the loss we can monitor convergence of each single model.
+
+For the reason above it **is essentially to track target metices during cross-validation**.
+
+## W-ALS with `reco` package
+
+We will use [reco](https://github.com/dselivanov/reco) which was announced in the last post. It allows to easlily track `map@k` and `ndcg@k`. Let's see it in action. 
+
+First of all we will create model of rank 8:
+
+```{r, "create-model-1"}
+library(reco)
+model = ALS$new(rank = 8)
+```
+
+`model` class has several methods (see `?ALS` for full documentation). Here we will use following:
+
+1. `fit_transform(x, n_iter, n_threads, ...)` - performs matrix factorization. It expects values in input sparse matrix `x` for observed interactions to be a confidence scores and zeros for not-observed. So raw iteractions sparse matrix will remain sparse. 
+1. `add_scorer(x, y, name, metric, ...)` - keep tracking of metrices after each training epoch.
+
+### Confidence 
+
+Now we will create cofidence matrices for train and cross-validation:
+
+```{r, "confidence"}
+
+make_confidence = function(x, alpha) {
+  x_confidence = x
+  stopifnot(inherits(x, "sparseMatrix"))
+  x_confidence@x = 1 + alpha * x@x
+  x_confidence
+}
+```
+
+Creating matrices:
+```{r}
+alpha = 0.1
+X_train_conf = make_confidence(X_train, alpha)
+X_cv_history_conf = make_confidence(X_cv_history, alpha)
+```
+It make sense to try different values of alpha - we will try it later.
+
+Note that we don't want to touch `X_cv_future` since we will use raw listening counts as relevance scores in `ndcg` calculation. If we will transform them we won't be able to compare `ndcg` of the models wich use different confidence transformations because `ndcg` values will depend on $\alpha$.
+
+Adding scoring metrices to model - `ndcg@10` and `map@10`:
+
+```{r, "scorers"}
+model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = "ndcg-10", metric = "ndcg@10")
+model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = "map-10", metric = "map@10")
+```
+
+### Training
+
+When using `reco` with optimized multithreaded BLAS such as Apple VecLib, OpenBLAS, Intel MKL it is **very important to disable BLAS parallelism** since `reco` itself already uses multiple threads at higher level. Due to thread contention and nesting such programs **can be slower then single thread program by a factor of 1000 and more!** In order to set number of BLAS threads to one I will use `RhpcBLASctl` package.
+
+```{r, "fit-1"}
+RhpcBLASctl::blas_set_num_threads(1)
+user_embeddings = model$fit_transform(X_train_conf, n_iter = 10L, n_threads = 8)
+```
+
+Check trace of the training:
+```{r, "plot-1", warning=FALSE, message=FALSE}
+library(ggplot2)
+trace = attr(user_embeddings, "trace")
+g = ggplot(trace) +  geom_line(aes(x = iter, y = value, col = scorer))
+plotly::ggplotly(g, width = 9, height = NULL)
+```
+As we can see algorithm quickly converges (only about 5 iterations) and loss convergence is highly correlated to `ndcg` and `map` convergence. More interesting it seems algorithm is quite resistant to overfitting. 
+
+Let's create grid search in order to find optimal hyperparameters of $\alpha$ and rank. Usually models with higher rank work better. But also the larger the rank the stronger should be regularization $\lambda$. Here we omitting tuning of $\lambda$ for simplicity.
+
+```{r, "fit-grid"}
+futile.logger::flog.threshold(futile.logger::ERROR)
+
+RhpcBLASctl::blas_set_num_threads(1)
+
+trace = NULL
+alpha = c(0.01, 1)
+rank = c(16, 8)
+n_iter_max = 10L
+n_threads = 8L
+grid = expand.grid(alpha = alpha, rank = rank)
+convergence_tol = 0.01
+for(k in seq_len(nrow(grid))) {
+  alpha = grid$alpha[[k]]
+  rank = grid$rank[[k]]
+  
+  # futile.logger::flog.info("alpha = %.3f, rank = %d", alpha, rank)
+  model = ALS$new(rank = rank)
+
+  X_train_conf = make_confidence(X_train, alpha)
+  X_cv_history_conf = make_confidence(X_cv_history, alpha)
+  
+  model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = "ndcg-10", metric = "ndcg@10")
+  model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = "map-10", metric = "map@10")
+  
+  # fit model
+  user_embeddings = model$fit_transform(X_train_conf, n_iter = n_iter_max, 
+                                        convergence_tol = convergence_tol, n_threads = n_threads)
+  # store strace
+  grid_trace = attr(user_embeddings, "trace")
+  
+  grid_trace$param_set = sprintf("alpha=%.3f; rank=%d", alpha, rank)
+  trace = c(trace, list(grid_trace))
+}
+trace = rbindlist(trace)
+```
+
+Plotting traces:
+
+```{r, "plot-grid"}
+g = ggplot(trace) + 
+  geom_line(aes(x = iter, y = value, col = param_set)) +
+  facet_wrap( ~ scorer, scales = "free") +
+  theme(legend.position="bottom")
+plotly::ggplotly(g, width = 9, height = NULL)
+```
+
+Calculation of `map` and `ndcg` for each iteration is not always necessary because as we've seen above it is highly correlated with loss. Also it takes quite long time to compute such metrices. So usually it worth just to check them after loss converges. This is easy with `$ndcg_k()` and `$ap_k()` methods:
+
+```{r, eval=FALSE}
+ndcg_k = model$ndcg_k(x = X_cv_history_conf, y = X_cv_future, k = 10)
+mean_ndcg_k = mean(ndcg_k)
+ap_k = model$ap_k(x = X_cv_history_conf, y = X_cv_future, k = 10)
+mean_ap_k = mean(ap_k)
+```
+
+## Generating low-latency recommendations
+
+How recommendations are generated? This is simple: for a given user $j$ with latent vector $U_j$ and all items with matrix of latent factors $I$ we compute dot product: $score = U_j I$. $score_i$ is our confidence that user $U_j$ will be interested in item $I_i$. Now we can take top N items, possibly apply some business logic on top (for example filter out already listened artists). Then deliver recommendation to user. So far so good. **But what can we show to new users? We don't have latent factors for them!**
+
+### Recommendations for new users
+
+This question is not particularly well explained in articles or blog posts I found. Moreover it looks like big source of confusion - a lot of questions at StackOverflow: [1](https://stackoverflow.com/questions/41537470/als-model-how-to-generate-full-u-vt-v), [2](https://stackoverflow.com/questions/41568974/als-model-predicted-full-u-vt-v-ratings-are-very-high), [3](https://stackoverflow.com/questions/29160046/spark-mllib-collaborative-filtering-with-new-user), [4](https://stackoverflow.com/questions/36723429/how-can-i-handle-new-users-items-in-model-generated-by-spark-als-from-mllib), [5](https://datascience.stackexchange.com/questions/14744/spark-als-recommending-for-new-users).
+
+One obvious solution will be to add new users interactions and run matrix factoriation again. However such method won't work for real world problems - full factorization is very expensive operation and we need recommendations in near real-time. 
+
+But we can make very good approximation of the idea above. Remember that after convergence we got 2 matrices $U$ and $I$ - users and items embeddings. They are calculated from large amount of user-item interactions and each of them unlikely will change too much after addition of couple of users or items. 
+
+Reminder - our goal is to create recommendations for user which was not in our training data. In order to do this we need to: 
+
+1. Take embeddings $I$ from full matrix factorization
+1. Somehow obtain user embeddings $U_j$
+1. Calculate $score = U_j I$ and sort items according to scores values
+
+So the task will be following: given a new user interactions and **precalculated fixed item embeddings** (from full matrix factorization) we need to obtain user embeddings. How to do that? Little linear algebra will help - we need just to **run single iteration of our ALS algorithm**. This is exactly how we minimized cost during full matrix factorization - alternated between fixing user factors and solving for item factors and fixing item factors and solving for user factors. So given item factor we can calculate new users factors.
+
+And this is how [reco's](https://github.com/dselivanov/reco) `transform` method works. `predict` method takes user embeddings from `transform` method, multiplies with item embeddings and takes top of them. This is exactly how we made recommendations for our cross-validation.
+
+Lets go through example:
+
+Obtain new user embeddings:
+```{r, "transform-predict"}
+model = ALS$new(rank = 16)
+set.seed(1)
+alpha = 0.01
+X_train_conf = make_confidence(X_train, alpha)
+X_cv_history_conf = make_confidence(X_cv_history, alpha)
+user_embeddings = model$fit_transform(X_train_conf, n_iter = 10L, n_threads = 8)
+new_user_embeddings = model$transform(X_cv_history_conf)
+```
+
+And let's check how to make predictions for a single user and how much time it will take:
+```{r, "predict single user"}
+library(microbenchmark)
+new_user_1 = X_cv_history_conf[1:1, , drop = FALSE]
+microbenchmark({new_user_predictions = model$predict(new_user_1, k = 10)}, times = 10)
+```
+
+As we can see it is single digit millisecond, so we can serve them real-time. **In the next post I will describe how to build scalable  high-performance RESTful service for serving recommendations in real-time.**
+
+### Similar items
+
+Another very useful type of recommendations is item-to-item recommendations. A good example is Amazon which show similar items on a product page. And interestingly we can create such recommendations by using item embeddings and calculationg cosine distance between them:
+
+```{r, "item2item"}
+# transpose for convenience of cosine distance calculation
+artist_emb = t(model$components)
+artist_query = artist_emb["the beatles", , drop = FALSE]
+artist_query_sim = text2vec::sim2(artist_query, artist_emb, method = "cosine")
+# flatten 1-row matrix
+artist_query_sim = artist_query_sim[1, ]
+# check similar artists
+sort(artist_query_sim, decreasing = T)[1:10]
+```
+
+I can't say why "Bob Dylan" or "The Rolling Stones" are ahead of "John Lennon". Keep in mind that we didn't solve optimization task for item "similarity" (and notion of similarity itself is ambigious). But they look reasonalbe and we got them complimentary to our user-item recommendations.
+
+Here is another example for "The Offspring":
+```{r, "item2item-2"}
+# transpose for convenience of cosine distance calculation
+artist_emb = t(model$components)
+artist_query = artist_emb["the offspring", , drop = FALSE]
+artist_query_sim = text2vec::sim2(artist_query, artist_emb, method = "cosine")
+# flatten 1-row matrix
+artist_query_sim = artist_query_sim[1, ]
+# check similar artists
+sort(artist_query_sim, decreasing = T)[1:10]
+```
+
+## Conclusions
+
+Summarizing:
+
+1. I've descibed tips on how to make offline evaluation and cross-validation of recommender systems;
+1. We've seen how to perform cross-validation and hyperparameter search with [reco](https://github.com/dselivanov/reco) package;
+1. Learned how to make low-latency recommendations for new users;
+1. Explored how to use item embeddings in order to construct item-to-item recommendations.
+
+I remember that in last post I promised to provide some benchmarks of `reco` against other libraries. Current post is too long for this, so I will compare [reco](https://github.com/dselivanov/reco) with other tools in next post. Hopefully they will be:
+
+* Python's [implicit](https://github.com/benfred/implicit) module
+* Quora's [qmf](https://github.com/benfred/implicit) C++ library
+* Spark's implementation of [ALS](http://spark.apache.org/docs/latest/ml-collaborative-filtering.html).
+
+Additionally I hope we will explore some options for deployment of R models as scalable and high-performance RESTful microservices. 
+
+Let me know what do you think in the comments.

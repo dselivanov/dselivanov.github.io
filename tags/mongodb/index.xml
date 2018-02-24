@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Mongodb on Data Science notes</title>
+    <link>/tags/mongodb/</link>
+    <description>Recent content in Mongodb on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Sun, 02 Nov 2014 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/mongodb/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>rmongodb 1.8.0</title>
+      <link>/post/rmongodb-1.8.0/</link>
+      <pubDate>Sun, 02 Nov 2014 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/rmongodb-1.8.0/</guid>
+      <description>Today I’m introducing new version of rmongodb (which I started to maintain) – v1.8.0. Install it from github:
+library(devtools) install_github(&amp;quot;mongosoup/rmongodb@v1.8.0&amp;quot;)  Release version will be uploaded to CRAN shortly. This release brings a lot of improvements to rmongodb:
+ Now rmongodb correctly handles arrays.  mongo.bson.to.list() rewritten from scratch. R’s unnamed lists are treated as arrays, named lists as objects. Also it has an option – whether to try to simplify vanilla lists to arrays or not.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,176 @@
+---
+title: Matrix factorization for recommender systems
+author: Dmitriy Selivanov
+date: "2017-05-28"
+slug: 2017-05-28-matrix-factorization-for-recommender-systems
+tags:
+  - R
+  - recommender-systems
+description: Introducing Weigted Alternating Least Squares for implicit feedback datasets (and how to built it from scratch in plain R).
+draft: false
+keywords:
+  - recommender system
+  - implicit feedback
+type: post
+mathjax: true
+classoption: aspectratio=169
+---
+
+Generally speaking the task for a recommender system is not to make up-sale. The real task is to keep customers engaged in your service. With loyal customers, you can monetize your service.
+
+Recommender systems is a very wide area, but in this post I won't go into basics. Instead, I will explain **collaborative filtering** and more precisely - de-facto industry standard - **matrix factorization**.
+
+## User-Item interactions
+
+The idea of collaborative filtering is that given collected behavior of many customers you can find some patterns and predict their future actions using history of actions of similar customers. It worth to highlight that actions can be:
+
+1. **explicit** - user explicitly expressed his impression of an item. Probably the most common example of explicit feedback is when user assigns a rating to the item (think user is asked to rate movie).
+1. **implicit** - user just viewed/consumed some items. A good example is when a customer browses some online shop - we can track which items he viewed, added to cart, etc. In this case, some events should have more weight than others - obviously “add to cart” gives a much stronger signal of user preference than just a page view.
+
+But in both cases we can store user-item interactions as **sparse matrix** where by convention users are in rows and items are in columns and interaction scores are values:
+```{r, echo=FALSE, warning=FALSE}
+knitr::kable(x = matrix(c("_", "1", "_", "3", "_", "_", "5"), nrow = 4, ncol = 4, 
+                        dimnames = list(c("user_1", "user_2", "...", "user_n"), 
+                                        c("item_1", "item_2", "...", "item_n"))),
+             align = "c")
+```
+
+Worth to note, that **missing values in sparse matrix are not zeros** - they are latent unobserved values!
+
+## Decomposition of user-item interaction matrix
+
+The high-level idea behind matrix factorization is quite simple. Having user-item interaction matrix we can decompose it into two lower rank matrices $U$ and $I$. And we will decompose it in a way that dot product of user-factors vector and item-factors vector should recover number which represents user-item interaction in original interaction matrix.
+
+### Explicit feedback
+
+A simple model for explicit feedback (which is well studied (thanks to [netflix prize competition](https://en.wikipedia.org/wiki/Netflix_Prize) )) can look like:
+
+`$$loss = L = \sum_{ u = user} \sum_{i = item} (R_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$`
+where $R$ - observed ratings, $X$ - user embeddings, $Y$ - item embeddings, $\lambda$ is regularization parameter.
+
+
+A little bit more complex model could include general bias and biases for user and item:
+
+`$$loss = L = \sum_{ u = user} \sum_{i = item} (R_{ui} - \mu - b_i - b_u - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 + b_i^2 + b_u^2)$$`
+
+Both of this models can be solved with different methods such as SGD or ALS. Famous Simon Funk SVD algorithm is no more than the above decomposition solved with SGD.
+
+P.S. In context of recommender systems the above decomposition is known as "SVD", but obviously it is not.
+
+### Implicit feedback
+
+However, most of the recommender systems deal with implicit feedback. This is the result of the fact that it is much easier to observe user behavior than ask a user to explicitly express impression. Also usually datasets with implicit feedback are significantly larger (however noisier) and allow models to find more interesting patterns. So in this post, we will focus on a model which works for implicit feedback.
+
+## Collaborative Filtering for Implicit Feedback Datasets
+
+Weighted alternating least squares model which is described in [Collaborative Filtering for Implicit Feedback Datasets](http://yifanhu.net/PUB/cf.pdf) paper became de-facto a standard for matrix factorization in implicit feedback settings (and in fact is implemented in "big data" frameworks such as  Spark, Flink, Graphlab). The main idea is similar to “SVD” above but differs in a sense how we treat values in user-items interactions matrix. The main difference is that now we treat all interactions as positive and numbers in user-item interaction matrix reflect **confidence** that user is interested in an item. Below is what we will try to optimize:
+
+`$$loss = L = \sum_{ u = user} \sum_{i = item} C_{ui}(P_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$`
+Here $X$, $Y$ are user and item embeddings. 
+
+In order to explain what are matrices $P$ and $c$ let's first introduce matrix $R$ which is no more than user-item interactions matrix. It is not presented in the equation above but it implicitly defines matrices $P$, $C$: 
+
+* $P$ is indicator matrix where $P[u, i] = 1$ if user $u$ interacted with item $i$ and $0$ otherwise ( simply we can think $P$ = $sign(R)$). 
+* The most interesting part is matrix $C$ - confidence matrix. Confidence matrix can be derived from $R$ with a family of functions with signature: $C = 1 + f(R)$. Here number $1$ is very important constraint - it allows us to implement efficient optimization algorithm which will be described below.
+
+Authors of the model propose $C = 1 + \alpha R$, where alpha is some hyperparameter. We can think that for the observed user-item interactions we are more confident that user will prefer this item over not observed item (which is very logical). For example, let $\alpha = 40$. In this case, $C_{ui}$ will be equal to $1$ for non-observed user-item interactions and $40 * r_{ui}$ for the observed interactions. Developers can design wide range of functions to construct confidence from raw user-item interactions. For example, alternative function proposed by authors is $C = 1 + \alpha \log(1 + R / \epsilon)$. I personally highly recommend reading original paper in order to get a better understanding of the logic behind the model.
+
+### Optimization with weighted alternating least squares
+
+Having defined loss function, we can optimize parameters $X$ and $Y$. As seen from the equation the **problem is non-convex**. This means there is no efficient solver with convergence guarantees. However, **SGD** proved to be useful in such settings and can find a good local minimum.But it also has some limitations:
+
+* not easy to parallelize (however if the problem is sparse enough, hogwild style asynchronous updates can be used)
+* implicit feedback datasets usually can be not very sparse
+* additional hyperparameter - learning rate
+
+Alternatively, we can note that **fixing $X$ or $Y$ makes problem convex**. And we can leverage efficient techniques to solve the optimization problem. So we can fix $X$, then compute approximation of $Y$ then fix $Y$ and compute approximation of $X$ and so on. This method is called "Alternating Least Squares". 
+
+### Know your math
+
+Let's derive equations:
+
+1. For fixed $Y$: 
+`$$dL/dx_u = -2\sum_{i = item} c_{ui}(p_{ui} - x_u^Ty_i)y_i + 2\lambda x_u = $$`
+`$$-2\sum_{i = item} c_{ui}(p_{ui} - y_i^Tx_u)y_i + 2\lambda x_u = $$`
+`$$-2Y^TC^up(u) +2Y^TC^uYx_u + 2\lambda x_u$$`
+Setting $dL/dx_u = 0$ for optimal solution gives us `$$(Y^T C^u Y+\lambda I) x_u = Y^T C^u p(u)$$`. 
+And $x_u$ can be obtained by solving system of linear equations: `$$x_u = solve(Y^T C^u Y+\lambda I,  Y^T C^u p(u))$$`
+
+1. Similarly for fixed $X$ :
+`$$dL/dy_i = -2X^TC^ip(i) +2X^TC^iYy_i + 2\lambda y_i$$`
+`$$y_i = solve(X^T C^i X+\lambda I,  X^T C^i p(i))$$`
+
+Another optimization will come after notice that $X^T C^i X = X^T X + X^T (C^i - I) X$ and $Y^T C^u Y = Y^T Y + Y^T (C^u - I) Y$. So $X^T X$ and $Y^T Y$ can be precomputed.
+
+### Know your code
+
+But not only math matters when building recommender system - knowledge of programming is essential. It is quite easy to translate optimization algorithm above into a code. But at the same time naive version will be increadibly inefficient (for example see [minimal python implementation](https://github.com/MrChrisJohnson/implicit-mf) which use `numpy` and sparse matrices from `scipy` but still ~ 60000(!!!) times slower than it should be. And similar implementation in [R's implicitcf package](https://github.com/andland/implicitcf)).
+
+
+Recap of what we are trying to solve: $y_i = solve(X^T X + \lambda I + X^T (C^i - I) X, X^T C^i p(i))$ (this equation is for items, for user is similar). And naive implementation (actually not totally - see explanation below): 
+
+```{r, eval = FALSE}
+solver_items = function(x_user_item, user_factors, lambda, alpha) {
+  # we use confidence = 1 + alpha * x
+  x_user_item_confidence_minus_1 = x_user_item * alpha
+  
+  rank = ncol(user_factors)
+  item_factors = matrix(0, nrow = rank, ncol = ncol(x_user_item))
+  XtX_ridge = t(user_factors) %*% user_factors + diag(lambda)
+  for(i in 1L:nrow(x_user_item)) {
+    # since we subtract "eye" matrix we care only about non-zero entries and our matrix remains sparse!
+    # drop = FALSE to not cast sparse column to dense vector
+    C_i_minus_eye = x_user_item_confidence_minus_1[, i, drop = FALSE]
+    lhs = XtX_ridge + t(X) %*% C_i_minus_eye %*% X
+    
+    # since we multiply by indicator p(i) we really care only about non-zero entries!
+    C_i_p_i = x_user_item * alpha
+    C_i_p_i@x = C_i_p_i@x + 1
+    rhs = t(X) %*% C_i_p_i
+    
+    item_factors[ , i] = solve(lhs, rhs)
+  }
+  item_factors
+}
+```
+**Note that we never cast our large sparse user-item matrix to dense! we never materialize our confidence matrix. Here as promised we exploit special structure of confidence function - $C = 1 + f(R)$ **
+
+But as I said above this implementation is 50000x - 100000x slower than it can be. And one of the main problems is access pattern to rows/columns of sparse matrices. Formats in which sparse matrices are stored (CSC, CSR) are designed for efficient matrix operations, not random access. Developers should avoid matrix slicing in hot paths of code. Another problem is that even after subsetting we multiply sparse vector by a large dense matrix. Which is effectively equal to just subsetting columns of dense matrix which correspond to non-zero indices in sparse vector and elementwise product to sparse vector values.
+
+Moreover, since we are doing this sequentially user-by-user we can efficiently use CSC or CSR compressed matrix format. Another great thing about ALS is that it can be easily parallelized since calculations for each user and each item are independent. So each iteration in a loop above could be done in parallel!
+
+Summarizing the above we can rewrite our solver in the following way:
+```{r, eval=FALSE}
+#' @X - user or item embeddings of the shape rank * n_user or rank * n_item
+#' @confidence_uset_item sparse user-item interactions matrix non-zero values of which 
+#' were transformed to confidence matrix with using `1 + f(x)`
+#' @Lambda - regularization constant
+solver = function(X, confidence_uset_item, Lambda, n_cores = 1, ...) {
+  XtX = tcrossprod(X)
+  XtX_ridge = XtX + Lambda
+  nc = ncol(confidence_uset_item)
+  RES = parallel::mclapply(1:nc, function(i) {
+    p1 = confidence_uset_item@p[[i]]
+    p2 = confidence_uset_item@p[[i + 1L]]
+    pind = p1 + seq_len(p2 - p1)
+    ind = confidence_uset_item@i[pind] + 1L
+    
+    confidence = confidence_uset_item@x[pind]
+    X_i = X[, ind, drop = FALSE]
+
+    lhs = XtX_ridge + X_i %*% (t(X_i) * (confidence - 1))
+    rhs = X_i %*% confidence
+    solve(lhs, rhs)
+  }, mc.cores = n_cores, ...)
+  do.call(cbind, RES)
+}
+```
+
+Using the above insights allowed us to write weighted ALS solver in **pure R which is comparable in speed to highly optimized Quora `qmf` solver and Spark ALS** (benchmarks in next post). 
+
+
+## **reco** package
+
+Also I'm glad to open-source my R's [reco](https://github.com/dselivanov/reco) package which uses `RcppArmadillo` and `OpenMP`, so it is even more performant and memory friendly. In the next post I will show how to build recommendations on large real-world datasets. We will see that cross-validation of recommendations is not an obvious thing and will learn how to make recommendations for new users (which is usually not described in articles and a lot of people are struggling with).
+
+### Know your math, know you code. Stay Tuned.

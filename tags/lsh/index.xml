@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lsh on Data Science notes</title>
+    <link>/tags/lsh/</link>
+    <description>Recent content in Lsh on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Fri, 02 Jan 2015 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/lsh/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Locality Sensitive Hashing in R</title>
+      <link>/post/locality-sensitive-hashing-in-r-part-1/</link>
+      <pubDate>Fri, 02 Jan 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/locality-sensitive-hashing-in-r-part-1/</guid>
+      <description>Introduction In the next series of posts I will try to explain base concepts Locality Sensitive Hashing technique.
+Note, that I will try to follow general functional programming style. So I will use R&amp;rsquo;s Higher-Order Functions instead of traditional R&amp;rsquo;s *apply functions family (I suppose this post will be more readable for non R users). Also I will use brilliant pipe operator %&amp;gt;% from magrittr package. We will start with basic concepts, but end with very efficient implementation in R (it is about 100 times faster than python implementations I found).</description>
+    </item>
+    
+  </channel>
+</rss>

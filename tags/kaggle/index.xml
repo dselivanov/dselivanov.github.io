@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kaggle on Data Science notes</title>
+    <link>/tags/kaggle/</link>
+    <description>Recent content in Kaggle on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Tue, 14 Feb 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/kaggle/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Fitting logistic regression on 100gb dataset on a laptop</title>
+      <link>/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/</guid>
+      <description>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - https://github.com/dselivanov/kaggle-outbrain.
+This is continue of Lessons learned from “Outbrain Click Prediction” kaggle competition (part 1). As a quick recap - we achieved MAP@12 ~ 0.67 which is equal to ~90-100 position on leaderboard. And we didn’t use information about page views from 100gb (30gb compressed) page_views.csv.zip file.
+Splitting As it is impossible to read zip file with R line by line (at least I don’t know solution) we will split file into many “mini-batches” in a way that each such batch can be efficiently read from disk into RAM.</description>
+    </item>
+    
+    <item>
+      <title>Large data, feature hashing and online learning</title>
+      <link>/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/</link>
+      <pubDate>Sat, 04 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/</guid>
+      <description>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - https://github.com/dselivanov/kaggle-outbrain.
+Recently I participated in Outbrain Click Prediction kaggle competition (and no, I won’t talk about crazy xgboost stacking and blending :-) ). Competition was interesting for me mainly because of 2 things:
+Organizers provided a lot of data - around 100gb. I like to solve problems efficiently, so initial main challenge for was to try to solve this on my laptop.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Data Science notes</title>
+    <link>/tags/</link>
+    <description>Recent content in Tags on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Tue, 14 Feb 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Big_data</title>
+      <link>/tags/big_data/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/big_data/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Data_table</title>
+      <link>/tags/data_table/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/data_table/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Glove</title>
+      <link>/tags/glove/</link>
+      <pubDate>Sat, 09 Jan 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/glove/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Gpgpu</title>
+      <link>/tags/gpgpu/</link>
+      <pubDate>Thu, 04 Jun 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/gpgpu/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Hashing_trick</title>
+      <link>/tags/hashing_trick/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/hashing_trick/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kaggle</title>
+      <link>/tags/kaggle/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/kaggle/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Lsh</title>
+      <link>/tags/lsh/</link>
+      <pubDate>Fri, 02 Jan 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/lsh/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Mongodb</title>
+      <link>/tags/mongodb/</link>
+      <pubDate>Sun, 02 Nov 2014 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/mongodb/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Online_learning</title>
+      <link>/tags/online_learning/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/online_learning/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>R</title>
+      <link>/tags/r/</link>
+      <pubDate>Mon, 10 Jul 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/r/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Rcpp</title>
+      <link>/tags/rcpp/</link>
+      <pubDate>Sat, 09 Jan 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/rcpp/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Rcppparallel</title>
+      <link>/tags/rcppparallel/</link>
+      <pubDate>Sat, 09 Jan 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/rcppparallel/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Recommender Systems</title>
+      <link>/tags/recommender-systems/</link>
+      <pubDate>Mon, 10 Jul 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/recommender-systems/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Setup</title>
+      <link>/tags/setup/</link>
+      <pubDate>Thu, 16 Jul 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/setup/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Spark</title>
+      <link>/tags/spark/</link>
+      <pubDate>Sat, 20 Feb 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/spark/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Sparkr</title>
+      <link>/tags/sparkr/</link>
+      <pubDate>Sat, 20 Feb 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/sparkr/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Text2vec</title>
+      <link>/tags/text2vec/</link>
+      <pubDate>Fri, 07 Oct 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/text2vec/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Word2vec</title>
+      <link>/tags/word2vec/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/tags/word2vec/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

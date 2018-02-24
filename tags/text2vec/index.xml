@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Text2vec on Data Science notes</title>
+    <link>/tags/text2vec/</link>
+    <description>Recent content in Text2vec on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Fri, 07 Oct 2016 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/text2vec/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>text2vec 0.4</title>
+      <link>/post/text2vec-0-4/</link>
+      <pubDate>Fri, 07 Oct 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec-0-4/</guid>
+      <description>Introducing text2vec 0.4 Today I&amp;rsquo;m pleased to announce new major release of text2vec - text2vec 0.4 which is already on CRAN.
+For those readers who is not familiar with text2vec - it is an R package which provides an efficient framework with a concise API for text analysis and natural language processing.
+With this release I also launched project homepage - http://text2vec.org where you can find up-to-date documents and tutorials.</description>
+    </item>
+    
+    <item>
+      <title>text2vec 0.3</title>
+      <link>/post/text2vec-0-3/</link>
+      <pubDate>Thu, 17 Mar 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec-0-3/</guid>
+      <description>updated 2016-03-31 - few functions renamed
+updated 2016-10-07 - see updated tutorial for text2vec 0.4
+Today I&amp;rsquo;m pleased to announce preview of the new version of text2vec. It is located in the 0.3 development branch, but very soon (probably in about a week) it will be merged into master.
+To reproduce examples below, please install text2vec@0.3 from github:
+devtools::install_github(&#39;dselivanov/text2vec@0.3&#39;)  Also I&amp;rsquo;m waiting for feedback from text2vec users, please spend a few minutes:</description>
+    </item>
+    
+    <item>
+      <title>text2vec GloVe implementation details</title>
+      <link>/post/fast-parallel-async-adagrad/</link>
+      <pubDate>Sat, 09 Jan 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/fast-parallel-async-adagrad/</guid>
+      <description>Before reading this post, I very recommend to read:
+ Orignal GloVe paper Jon Gauthier&amp;rsquo;s post, which provides detailed explanation of python implementation. This post helps me a lot with C++ implementation.  Word embeddings After Tomas Mikolov et al. released word2vec tool, there was a boom of articles about words vector representations. One of the greatest is GloVe, which did a big thing by explaining how such algorithms work.</description>
+    </item>
+    
+    <item>
+      <title>GloVe vs word2vec revisited.</title>
+      <link>/post/glove-enwiki/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/glove-enwiki/</guid>
+      <description>Today I will start to publish series of posts about experiments on english wikipedia. As I said before, text2vec is inspired by gensim - well designed and quite efficient python library for topic modeling and related NLP tasks. Also I found very useful Radim&amp;rsquo;s posts, where he tried to evaluate some algorithms on english wikipedia dump. This dataset is rather big. For example, dump for 2015-10 (which will be used below) is 12gb bzip2 compressed file.</description>
+    </item>
+    
+    <item>
+      <title>Analyzing texts with text2vec package</title>
+      <link>/post/text2vec/</link>
+      <pubDate>Mon, 09 Nov 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec/</guid>
+      <description>updated 2016-10-07 - see post with updated tutorial for text2vec 0.4
+In the last weeks I have actively worked on text2vec (formerly tmlite) - R package, which provides tools for fast text vectorization and state-of-the art word embeddings.
+This project is an experiment for me - what can a single person do in a particular area? After these hard weeks, I believe, he can do a lot.
+There are a lot of changes from my previous introduction post, and I want to highlight few of them:</description>
+    </item>
+    
+  </channel>
+</rss>

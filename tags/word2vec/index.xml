@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Word2vec on Data Science notes</title>
+    <link>/tags/word2vec/</link>
+    <description>Recent content in Word2vec on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Tue, 01 Dec 2015 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/word2vec/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>GloVe vs word2vec revisited.</title>
+      <link>/post/glove-enwiki/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/glove-enwiki/</guid>
+      <description>Today I will start to publish series of posts about experiments on english wikipedia. As I said before, text2vec is inspired by gensim - well designed and quite efficient python library for topic modeling and related NLP tasks. Also I found very useful Radim&amp;rsquo;s posts, where he tried to evaluate some algorithms on english wikipedia dump. This dataset is rather big. For example, dump for 2015-10 (which will be used below) is 12gb bzip2 compressed file.</description>
+    </item>
+    
+  </channel>
+</rss>

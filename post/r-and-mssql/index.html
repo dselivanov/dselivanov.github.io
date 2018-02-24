@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Working with MS SQL server on non-windows systems  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="" />
+
+<meta name="keywords" content="setup, ">
+
+
+<meta property="og:title" content="Working with MS SQL server on non-windows systems  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/r-and-mssql/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content=""/>
+<meta property="og:article:published_time" content="2015-07-16T00:00:00Z" />
+<meta property="og:article:modified_time" content="2015-07-16T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="setup">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Working with MS SQL server on non-windows systems" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="/post/r-and-mssql/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Working with MS SQL server on non-windows systems",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2015-07-16",
+    "description": "",
+    "wordCount":  178 
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/r-and-mssql/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.18" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Working with MS SQL server on non-windows systems
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2015-07-16">16 Jul, 2015</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 1 min
+  &middot; (178 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/setup" class="label label-primary">setup</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  <p>As I know, there are few choices to connect from R to MS SQL Server:</p>
+
+<ol>
+<li><a href="https://cran.r-project.org/web/packages/RODBC/index.html">RODBC</a></li>
+<li><a href="https://cran.r-project.org/web/packages/RJDBC/index.html">RJDBC</a></li>
+<li><a href="https://github.com/agstudy/rsqlserver">rsqlserver</a></li>
+</ol>
+
+<p>But only second option can be used on <strong>mac</strong> and <strong>linux</strong> machines. Here is nice <a href="http://stackoverflow.com/questions/14513224/connecting-to-ms-sql-server-from-r-on-mac-linux">stackoverflow thread</a>.</p>
+
+<p>Most of the people suggest to use <a href="https://www.microsoft.com/en-us/download/confirmation.aspx?id=11774">microsoft sql java driver</a>. But there is a case when this will not help - <strong>windows domain authentification</strong>. In this situation I found the only working solution is to use nice <a href="http://jtds.sourceforge.net/">jTDS</a>. It not only solve this problem, but also <a href="http://jtds.sourceforge.net/benchTest.html">outperform</a> Microsoft JDBC Driver.</p>
+
+<p>So to use it you have to:</p>
+
+<ol>
+<li>Install <a href="https://cran.r-project.org/web/packages/rJava/">rJava</a>. There are a lot of manuals for diffrent OS on the internet.</li>
+<li>Install <a href="https://cran.r-project.org/web/packages/RJDBC/">RJDBC</a>.</li>
+<li>Download jTDS from <a href="http://sourceforge.net/projects/jtds/files/">official site</a>. Unpack it.</li>
+</ol>
+
+<p>Now you can easily connect to your source:<br />
+<em>(assume jtds-1.3.1, which is unpacked into ~/bin )</em></p>
+
+<pre><code class="language-r">drv &lt;- JDBC(&quot;net.sourceforge.jtds.jdbc.Driver&quot; , 
+            &quot;~/bin/jtds-1.3.1-dist/jtds-1.3.1.jar&quot;)
+mssql_addr &lt;- &quot;10.0.0.1&quot;
+mssql_port &lt;- &quot;1433&quot;
+domain &lt;- &quot;YOUR_DOMAIN&quot;
+connection_string &lt;- paste0(&quot;jdbc:jtds:sqlserver://&quot;, mssql_addr, &quot;:&quot;, mssql_port, 
+                            &quot;;domain=&quot;, domain)
+conn &lt;- dbConnect(drv, 
+                  connection_string, 
+                  user = 'user_name', 
+                  password = &quot;********&quot;)
+query &lt;- &quot;select count(*) from your_db.dbo.your_table&quot;
+cnt &lt;- dbGetQuery(conn = conn, statement = query)
+</code></pre>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/installing-cuda-toolkit-and-gputools/" title="Installing cuda toolkit and related R packages">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/text2vec/" title="Analyzing texts with text2vec package">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec/">Analyzing texts with text2vec package</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-and-mssql/">Working with MS SQL server on non-windows systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/installing-cuda-toolkit-and-gputools/">Installing cuda toolkit and related R packages</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li><li><a href="/tags/gpgpu">gpgpu</a></li><li><a href="/tags/lsh">lsh</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

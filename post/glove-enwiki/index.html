@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>GloVe vs word2vec revisited.  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="" />
+
+<meta name="keywords" content="text2vec, GloVe, word2vec, ">
+
+
+<meta property="og:title" content="GloVe vs word2vec revisited.  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/glove-enwiki/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content=""/>
+<meta property="og:article:published_time" content="2015-12-01T00:00:00Z" />
+<meta property="og:article:modified_time" content="2015-12-01T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="text2vec">
+    
+<meta property="og:article:tag" content="GloVe">
+    
+<meta property="og:article:tag" content="word2vec">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="GloVe vs word2vec revisited." />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="/post/glove-enwiki/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "GloVe vs word2vec revisited.",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2015-12-01",
+    "description": "",
+    "wordCount":  2436 
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/glove-enwiki/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.18" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>GloVe vs word2vec revisited.
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2015-12-01">1 Dec, 2015</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 12 min
+  &middot; (2436 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/text2vec" class="label label-primary">text2vec</a>
+  
+  <a href="/tags/glove" class="label label-primary">GloVe</a>
+  
+  <a href="/tags/word2vec" class="label label-primary">word2vec</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  
+
+<p>Today I will start to publish series of posts about experiments on english wikipedia. As I said before, <a href="https://github.com/dselivanov/text2vec">text2vec</a> is inspired by <a href="https://github.com/piskvorky/gensim">gensim</a> - well designed and quite efficient python library for topic modeling and related NLP tasks. Also I found very useful Radim&rsquo;s posts, where he tried to evaluate some algorithms on <a href="http://dumps.wikimedia.org/enwiki/">english wikipedia dump</a>. This dataset is rather big. For example, dump for <em>2015-10</em> (which will be used below) is <strong>12gb bzip2 compressed file</strong>. In uncompressed form it takes about 50gb. So I can&rsquo;t call it a &ldquo;toy&rdquo; dataset :-) You can download original files <a href="http://dumps.wikimedia.org/enwiki/">here</a>. We are interested in file which ends with <em>&ldquo;pages-articles.xml.bz2&rdquo;</em>.</p>
+
+<p><strong>All evaluation and timings were done on my macbook laptop with intel core i7 cpu and 16gb of ram.</strong></p>
+
+<p><strong>You can find all the code in the <a href="https://github.com/dselivanov/word_embeddings">post repository</a>.</strong></p>
+
+<h1 id="preparation">Preparation</h1>
+
+<p>After getting enwiki dump we should clean it - remove wiki xml markup. I didn&rsquo;t implement this stage in <em>text2vec</em>, so we will use <em>gensim</em>&rsquo;s <a href="https://github.com/piskvorky/sim-shootout">scripts</a> - and especially file <a href="https://github.com/piskvorky/sim-shootout/blob/master/prepare_shootout.py">prepare_shootout.py</a>. It is not very hard to implement it in R, but this is not top priority for me at the moment. So if anybody is willing to help - please see <a href="https://github.com/dselivanov/text2vec/issues/32">this issue</a>.</p>
+
+<p>After cleaning we will have <em>&ldquo;title_tokens.txt.gz&rdquo;</em> file, which represents wikipedia articles - one article per line. Also each line consists of two <em>tab-separated</em>(<code>&quot;\t&quot;</code>) parts - title of the article and text of the article. Texts consists of <em>space-separated</em> (<code>&quot; &quot;</code>) words in <em>lowercase</em>.</p>
+
+<h3 id="r-i-o-tricks">R I/O tricks</h3>
+
+<p>R&rsquo;s <code>base::readLines()</code> is very generic function to read lines of characters from files/connections. And because ot that, <strong><code>readLines()</code> is very slow</strong>. So in text2vec I use <code>readr::read_lines()</code> which more then 10x faster. <code>readr</code> is a relatively new package and it has one significant drawback - it doesn&rsquo;t have streaming API. This means you can&rsquo;t read file line-by-line - you can only read whole file in a single function call. Sometimes this can become an issue, but usually not - user can manually split big file into chunks using command line tools and work with them. Moreover, if your perform analysis on really large amounts of data, you probably use <em>Apache Spark/Hadoop</em> to prepare input. And usually data is stored in chunks of 64/128Mb in <code>hdfs</code>, so it is very natural to work with such chunks instead of single file.</p>
+
+<p>For this post, I splitted <code>title_tokens.txt.gz</code> into 100mb chunks using <code>split</code> command utility:</p>
+
+<pre><code>gunzip -c title_tokens.txt.gz | split --line-bytes=100m --filter='gzip --fast &gt; ~/Downloads/datasets/$FILE.gz'
+</code></pre>
+
+<p>If you are on <strong>OS X</strong>, install <code>coreutils</code> first: <code>brew install coreutils</code> and use <code>gsplit</code> command:</p>
+
+<pre><code>gunzip -c title_tokens.txt.gz | gsplit --line-bytes=100m --filter='gzip --fast &gt; ~/Downloads/datasets/$FILE.gz'
+</code></pre>
+
+<p>In all the code below we will use <code>title_tokens.txt.gz</code> file as input for <em>gesnim</em> and <code>title_tokens_splits/</code> directory as input for <em>text2vec</em>.</p>
+
+<h1 id="word-embeddings">Word embeddings</h1>
+
+<p>Here I want to demonstrate how to use text2vec&rsquo;s <a href="http://nlp.stanford.edu/projects/glove/">GloVe</a> implementation and briefly compare its performance with <a href="https://code.google.com/p/word2vec/">word2vec</a>. Originally I had plans to implement <em>word2vec</em>, but after reviewing <a href="www-nlp.stanford.edu/pubs/glove.pdf">GloVe paper</a>, I changed my mind. If you still haven&rsquo;t read it, I strongly recommend to do that.</p>
+
+<p>So, this post has several goals:</p>
+
+<ol>
+<li>Demonstrate how to process large collections of documents (that don&rsquo;t fit into RAM) with <strong>text2vec</strong>.</li>
+<li>Provide tutorial on <em>text2vec</em> GloVe word embeddings functionality.</li>
+<li>Compare <em>text2vec GloVe</em> and <em>gensim word2vec</em> in terms of:
+
+<ol>
+<li>accuracy</li>
+<li>execution time</li>
+<li>RAM consumption</li>
+</ol></li>
+<li>Briefly highlight advantages and drawbacks of current implementation. (I&rsquo;ll write separate post with more details about technical aspects.)</li>
+</ol>
+
+<h2 id="baseline">Baseline</h2>
+
+<p>Here we will follow excellent Radim&rsquo;s <a href="http://rare-technologies.com/making-sense-of-word2vec/">Making sense of word2vec</a> post and try to replicate his results.</p>
+
+<h3 id="just-to-remind-results">Just to remind results</h3>
+
+<pre class="output">
+Warning: package 'ggplot2' was built under R version 3.2.3
+</pre>
+
+<p><img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-3-1.png" alt="plot of chunk unnamed-chunk-3" /></p>
+
+<p>You can find corresponding original repository <a href="https://github.com/piskvorky/word_embeddings">here</a>.</p>
+
+<h2 id="modifications">Modifications</h2>
+
+<p>I made a few minor modifications in Radim&rsquo;s code.</p>
+
+<ol>
+<li>I don&rsquo;t evaluate <code>glove-python</code> for the following reasons:
+
+<ol>
+<li>Radim uses dense numpy matrix to store cooccurencies. While it is great for 30K vocabulary (<code>float32</code> dense matrix occupies ~ 3.6gb and it takes less time to fill it), it is not appropriate for larger vocabularies (for example <code>float32</code> matrix for 100K vocabulary will occupy ~ 40gb).</li>
+<li>Orginal <a href="https://github.com/maciejkula/glove-python">glove-python</a> creates sparse cooccurence matrix, but for some reason it has very poor performance (accuracy on analogue task ~1-2%). I&rsquo;m not very familiar with python, so can&rsquo;t figure out what is wrong. If somebody can fix this issue - let me know, I would be happy to add <em>glove-python</em> to this comparison.</li>
+</ol></li>
+<li>Construct vocabulary from top 30k words produced by <em>text2vec</em> vocabulary builder. <em>gensim</em> takes into account title of the article, which can contain upper-case words, punctuation, etc. I found that models which are based on vocabulary constructed from only articles body (not incuding title) are more accurate. This is true for both, GloVe and word2vec.</li>
+</ol>
+
+<h1 id="building-the-model">Building the model</h1>
+
+<p>I will <strong>focus on text2vec details</strong> here, because gensim word2vec code is almost the same as in Radim&rsquo;s post (again - all code you can find in <a href="https://github.com/dselivanov/word_embeddings">this repo</a>).</p>
+
+<p>Install <em>test2vec</em> from github:</p>
+
+<pre><code class="language-r">devtools::install_github('dselivanov/text2vec')
+</code></pre>
+
+<h2 id="vocabulary">Vocabulary</h2>
+
+<p>First of all we need to build a vocabulary:</p>
+
+<pre><code class="language-r">library(text2vec)
+# create iterator over files in directory
+it &lt;- idir('~/Downloads/datasets/splits/')
+# create iterator over tokens
+it2 &lt;- itoken(it, 
+              preprocess_function = function(x) 
+                str_split(x, fixed(&quot;\t&quot;)) %&gt;% 
+                # select only the body of the article
+                sapply(.subset2, 2), 
+              tokenizer = function(x) str_split(x, fixed(&quot; &quot;)))
+vocab &lt;- vocabulary(it2)
+</code></pre>
+
+<p>On my machine it takes about <em>1150 sec</em>, while <em>gensim</em> <code>gensim.corpora.Dictionary()</code> takes about <em>2100 sec</em>. <em>RAW I/O</em> is about <em>~ 150 sec</em>.
+<img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-6-1.png" alt="plot of chunk unnamed-chunk-6" /></p>
+
+<h3 id="pruning-vocabulary">Pruning vocabulary</h3>
+
+<p>We received all unique words and corresponding statistics:</p>
+
+<pre><code class="language-r">str(vocab)
+##List of 2
+## $ vocab:'data.frame':	8306153 obs. of  4 variables:
+##  ..$ terms          : chr [1:8306153] &quot;bonnerj&quot; &quot;beerworthc&quot; &quot;danielst&quot; &quot;anchaka&quot; ...
+##  ..$ terms_counts   : int [1:8306153] 1 1 1 1 1 1 1 1 1 1 ...
+##  ..$ doc_counts     : int [1:8306153] 1 1 1 1 1 1 1 1 1 1 ...
+##  ..$ doc_proportions: num [1:8306153] 2.55e-07 2.55e-07 2.55e-07 2.55e-07 2.55e-07 ...
+## $ ngram: Named int [1:2] 1 1
+##  ..- attr(*, &quot;names&quot;)= chr [1:2] &quot;ngram_min&quot; &quot;ngram_max&quot;
+## - attr(*, &quot;class&quot;)= chr &quot;text2vec_vocabulary&quot;
+</code></pre>
+
+<p>But we are interested in only frequent words, so we should filter out rare words. text2vec provides <code>prune_vocabulary()</code> function which has many useful options for that:</p>
+
+<pre><code class="language-r">TOKEN_LIMIT = 30000L
+# filter out tokens which are represented at least in 30% of documents
+TOKEN_DOC_PROPORTION = 0.3
+pruned_vocab &lt;- prune_vocabulary(vocabulary = vocab, 
+                                     doc_proportion_max = TOKEN_DOC_PROPORTION, 
+                                     max_number_of_terms = TOKEN_LIMIT)
+# save to csv to use in gensim word2vec
+write.table(x = data.frame(&quot;word&quot; = pruned_vocab$vocab$terms, &quot;id&quot; = 0:(TOKEN_LIMIT - 1)), 
+            file = &quot;/path/to/destination/dir/pruned_vocab.csv&quot;,
+            quote = F, sep = ',', row.names = F, col.names = F)
+</code></pre>
+
+<h2 id="corpus-construction">Corpus construction</h2>
+
+<p>Now we have vocabulary and can construct term-cooccurence matrix (<strong>tcm</strong>).</p>
+
+<pre><code class="language-r">WINDOW = 10L
+# create iterator over files in directory
+it &lt;- idir('~/Downloads/datasets/splits/')
+# create iterator over tokens
+it2 &lt;- itoken(it, 
+              preprocess_function = function(x) 
+                str_split(x, fixed(&quot;\t&quot;)) %&gt;% 
+                # select only the body of the article
+                sapply(.subset2, 2), 
+              tokenizer = function(x) str_split(x, fixed(&quot; &quot;)))
+# create_vocab_corpus can construct documen-term matrix and term-cooccurence matrix simultaneously
+# here we are not interesting in documen-term matrix, so set `grow_dtm = FALSE`
+corpus &lt;- create_vocab_corpus(it2, vocabulary = pruned_vocab, grow_dtm = FALSE, skip_grams_window = WINDOW)
+# in this call, we wrap std::unordered_map into R's dgTMatrix
+tcm &lt;- get_tcm(corpus)
+</code></pre>
+
+<p>Operation above takes about <strong>80 minutes</strong> on my machine and at peak consumes about <strong>11gb of RAM</strong>.</p>
+
+<h3 id="short-note-on-memory-consumption">Short note on memory consumption</h3>
+
+<p><strong>At the moment, during corpus construction, <em>text2vec</em> keeps entire term-cooccurence matrix in memory</strong>. In future versions it can be changed (Quite easily via simple map-reduce style algorithm. Exactly the same way it done in original Stanford implementation).</p>
+
+<p>As you can see memory consumption is rather high. But if we do some basic calculations we will realize that memory consumption is not so high:</p>
+
+<ol>
+<li>Internally <em>text2vec</em> stores <code>tcm</code> as <code>std::unordered_map&lt;std::pair&lt;uint32_t, uint32_t&gt;, float&gt;</code>.</li>
+<li>We <strong>store</strong> only elements which are <strong>above main diagonal</strong>, because our matrix is <strong>symmetric</strong>.</li>
+<li><code>tcm</code> above consists of ~ <code>200e6</code> elements. Matrix is <strong>quite dense - ~ 22% non-zero elements</strong> (above diagonal! in case of full storage, matrix will be ~ 44% dense).</li>
+</ol>
+
+<p>So, <em>200e6 * (4 + 4 + 8) = ~ 3.2 gb</em> - only memory to store our matrix in sparse triplet form using preallocated vectors. Also we should add usual <strong>3-4x <code>std::unordered_map</code> overhead</strong> and memory allocated for wrapping <code>unordered_map</code> into R sparse triplet <code>dgTMatrix</code>.</p>
+
+<h2 id="glove-training">GloVe training</h2>
+
+<p>We perform GloVe fitting using AdaGrad - stochastic gradient descend with per-feature adaptive learning rate. Also, fitting is done in fully parallel and asynchronous manner ( see <a href="https://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf">Hogwild! paper</a> ), so it can benefit from machines with multiple cores. In my tests I achieved almost 8x speedup on 8 core machine on the discribed above wikipedia dataset.</p>
+
+<p>Now we are ready to train our GloVe model. Here we will perform maximum 20 iterations. Also we will track our global cost and its improvement over iterations. We will stop fitting when improvement (in relation to previous epoch) will become smaller than given threshold - <code>convergence_threshold</code>.</p>
+
+<pre><code class="language-r">DIM = 600L
+X_MAX = 100L
+WORKERS = 4L
+NUM_ITERS = 20L
+CONVERGENCE_THRESHOLD = 0.005
+LEARNING_RATE = 0.15
+# explicitly set number of threads
+RcppParallel::setThreadOptions(numThreads = WORKERS)
+
+fit &lt;- glove(tcm = tcm, 
+             word_vectors_size = DIM, 
+             num_iters = NUM_ITERS,
+             learning_rate = LEARNING_RATE,
+             x_max = X_MAX, 
+             shuffle_seed = 42L, 
+             # we will stop if global cost will be reduced less then 0.5% then previous SGD iteration
+             convergence_threshold = CONVERGENCE_THRESHOLD)
+</code></pre>
+
+<p>This takes about <strong>431 minutes</strong> on my machine and stops on 20 iteration (no early stopping):</p>
+
+<blockquote>
+<p>2015-12-01 06:37:27 - epoch 20, expected cost 0.0145</p>
+</blockquote>
+
+<p><strong>Accuracy</strong> on analogue dataset is <strong>0.759</strong>:</p>
+
+<pre><code class="language-r">words &lt;- rownames(tcm)
+m &lt;- fit$word_vectors$w_i + fit$word_vectors$w_j
+rownames(m) &lt;-  words
+
+questions_file &lt;- '~/Downloads/datasets/questions-words.txt'
+qlst &lt;- prepare_analogue_questions(questions_file, rownames(m))
+res &lt;- check_analogue_accuracy(questions_lst = qlst, m_word_vectors = m)
+</code></pre>
+
+<blockquote>
+<p>2015-12-01 06:48:23 - capital-common-countries: correct 476 out of 506, accuracy = 0.9407<br />
+2015-12-01 06:48:27 - capital-world: correct 2265 out of 2359, accuracy = 0.9602<br />
+2015-12-01 06:48:28 - currency: correct 4 out of 86, accuracy = 0.0465<br />
+2015-12-01 06:48:31 - city-in-state: correct 1828 out of 2330, accuracy = 0.7845<br />
+2015-12-01 06:48:32 - family: correct 272 out of 306, accuracy = 0.8889<br />
+2015-12-01 06:48:33 - gram1-adjective-to-adverb: correct 179 out of 650, accuracy = 0.2754<br />
+2015-12-01 06:48:33 - gram2-opposite: correct 131 out of 272, accuracy = 0.4816<br />
+2015-12-01 06:48:34 - gram3-comparative: correct 806 out of 930, accuracy = 0.8667<br />
+2015-12-01 06:48:35 - gram4-superlative: correct 279 out of 506, accuracy = 0.5514<br />
+2015-12-01 06:48:37 - gram5-present-participle: correct 445 out of 870, accuracy = 0.5115<br />
+2015-12-01 06:48:39 - gram6-nationality-adjective: correct 1364 out of 1371, accuracy = 0.9949<br />
+2015-12-01 06:48:41 - gram7-past-tense: correct 836 out of 1406, accuracy = 0.5946<br />
+2015-12-01 06:48:42 - gram8-plural: correct 833 out of 1056, accuracy = 0.7888<br />
+2015-12-01 06:48:43 - gram9-plural-verbs: correct 341 out of 600, accuracy = 0.5683<br />
+2015-12-01 06:48:43 - OVERALL ACCURACY = 0.7593</p>
+</blockquote>
+
+<p><strong>Note</strong>, that sometimes AdaGrad converges to poorer local minima with larger cost. This means model will produce less accurate predictions. For example in some experiments while writing this post I stopped with <code>cost = 0.190</code> and <code>accuracy = ~ 0.72</code>. Also fitting <strong>can be sensitive to initial learning rate</strong>, some experiments still needed.</p>
+
+<p>Training <strong>word2vec takes 401 minutes</strong> and <strong>accuracy = 0.687</strong>.</p>
+
+<p><strong>As we can see, GloVe shows significantly better accuaracy.</strong></p>
+
+<p><img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-12-1.png" alt="plot of chunk unnamed-chunk-12" /></p>
+
+<p>Closer look to resources usage:</p>
+
+<p><img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-13-1.png" alt="plot of chunk unnamed-chunk-13" /></p>
+
+<h3 id="faster-training">Faster training</h3>
+
+<p>If you are more interested in training time you can do the following:</p>
+
+<ol>
+<li><p>Make more zeros in <code>tcm</code> by removing too rare cooccurences:</p>
+
+<pre><code class="language-r">ind &lt;- tcm@x &gt;= 1
+tcm@x &lt;- tcm@x[ind]
+tcm@i &lt;- tcm@i[ind]
+tcm@j &lt;- tcm@j[ind]
+</code></pre></li>
+
+<li><p>10 iterations with lower word vector dimensions (<code>DIM = 300</code> for example).</p></li>
+</ol>
+
+<pre><code class="language-r">    DIM &lt;- 300L
+    NUM_ITERS &lt;- 10
+    fit &lt;- glove(tcm = tcm, 
+                 word_vectors_size = DIM, 
+                 num_iters = NUM_ITERS,
+                 learning_rate = 0.1,
+                 x_max = X_MAX, 
+                 shuffle_seed = 42L, 
+                 max_cost = 10,
+                 # we will stop if global cost will be reduced less then 1% then previous SGD iteration
+                 convergence_threshold = 0.01)
+    words &lt;- rownames(tcm)
+    m &lt;- fit$word_vectors$w_i + fit$word_vectors$w_j
+    rownames(m) &lt;-  words
+    questions_file &lt;- '~/Downloads/datasets/questions-words.txt'
+    qlst &lt;- prepare_analogue_questions(questions_file, rownames(m))
+    res &lt;- check_analogue_accuracy(questions_lst = qlst, m_word_vectors = m)
+</code></pre>
+
+<p>Training takes 50 minutes on 4-core machine and get ~68% accuracy:</p>
+
+<blockquote>
+<p>2015-11-30 15:13:51 - capital-common-countries: correct 482 out of 506, accuracy = 0.9526<br />
+2015-11-30 15:13:54 - capital-world: correct 2235 out of 2359, accuracy = 0.9474<br />
+2015-11-30 15:13:54 - currency: correct 1 out of 86, accuracy = 0.0116<br />
+2015-11-30 15:13:57 - city-in-state: correct 1540 out of 2330, accuracy = 0.6609<br />
+2015-11-30 15:13:57 - family: correct 247 out of 306, accuracy = 0.8072<br />
+2015-11-30 15:13:58 - gram1-adjective-to-adverb: correct 142 out of 650, accuracy = 0.2185<br />
+2015-11-30 15:13:58 - gram2-opposite: correct 87 out of 272, accuracy = 0.3199<br />
+2015-11-30 15:13:59 - gram3-comparative: correct 663 out of 930, accuracy = 0.7129<br />
+2015-11-30 15:14:00 - gram4-superlative: correct 171 out of 506, accuracy = 0.3379<br />
+2015-11-30 15:14:01 - gram5-present-participle: correct 421 out of 870, accuracy = 0.4839<br />
+2015-11-30 15:14:03 - gram6-nationality-adjective: correct 1340 out of 1371, accuracy = 0.9774<br />
+2015-11-30 15:14:04 - gram7-past-tense: correct 608 out of 1406, accuracy = 0.4324<br />
+2015-11-30 15:14:06 - gram8-plural: correct 771 out of 1056, accuracy = 0.7301<br />
+2015-11-30 15:14:06 - gram9-plural-verbs: correct 266 out of 600, accuracy = 0.4433<br />
+2015-11-30 15:14:06 - OVERALL ACCURACY = 0.6774</p>
+</blockquote>
+
+<p><img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-16-1.png" alt="plot of chunk unnamed-chunk-16" /></p>
+
+<p><img src="../../articles/figure/2015-12-01-glove-enwiki-unnamed-chunk-17-1.png" alt="plot of chunk unnamed-chunk-17" /></p>
+
+<h1 id="summary">Summary</h1>
+
+<h2 id="advantages">Advantages</h2>
+
+<ol>
+<li>As we see <em>text2vec</em>&rsquo;s <em>GloVe</em> implementation looks like a good alternative to word2vec and outperforms it in terms of accuracy and running time (we can pick a set of parameters on which it will be <strong>both faster and more accurate</strong>).</li>
+<li><strong>Early stopping</strong>. We can stop training when improvements become small.</li>
+<li><code>tcm</code> is <strong>reusable</strong>. May be it is more fair to subtract timings for <code>tcm_creation</code> from benchmarks above.</li>
+<li><strong>Incremental fitting</strong>. You can easily adjust <code>tcm</code> with new data and continue fitting. And it will converge very quickly.</li>
+<li><em>text2vec</em> works on OS X, Linux and even Windows without any tricks/adjustments/manual configuration. Thanks to <em>Intel Thread Building Blocks</em> and <a href="rcppcore.github.io/RcppParallel/">RcppParallel</a>. It was a little bit simpler to program AdaGrad using <em>OpenMP</em> (as I actually did in my first attempt), but this leads to issues at installation time, especially on OS X and Windows machines.</li>
+</ol>
+
+<h2 id="drawbacks-and-what-can-be-improved">Drawbacks and what can be improved</h2>
+
+<ol>
+<li>One <strong>drawback</strong> - it <strong>uses a lot of memory</strong> (in contrast to <em>gensim</em> which is very memory-friendly. I was very impressed.). But this is natural - the fastest way to costruct <code>tcm</code> is to keep it in RAM as hash map and perform cooccurence increments in a global manner. Also note that we build <code>tcm</code> on top 30000 terms. Because of that it is very dense. I tried to build model on top 100000 terms and had no problems on machine with 32gb RAM. Matrix was much more sparse - ~ 4% of non zero elements. Anyway, one can implement simple map-reduce style algorithm to construct <code>tcm</code>. (using files as it done in original Stanford implemention) and then fit model in streaming manner.</li>
+<li>Sometimes model is quite <strong>sensitive to initial learning rate</strong>.</li>
+</ol>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/text2vec/" title="Analyzing texts with text2vec package">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/fast-parallel-async-adagrad/" title="text2vec GloVe implementation details">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec/">Analyzing texts with text2vec package</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-and-mssql/">Working with MS SQL server on non-windows systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/installing-cuda-toolkit-and-gputools/">Installing cuda toolkit and related R packages</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li><li><a href="/tags/gpgpu">gpgpu</a></li><li><a href="/tags/lsh">lsh</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

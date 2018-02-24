@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>text2vec 0.4  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="" />
+
+<meta name="keywords" content="text2vec, ">
+
+
+<meta property="og:title" content="text2vec 0.4  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/text2vec-0-4/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content=""/>
+<meta property="og:article:published_time" content="2016-10-07T00:00:00Z" />
+<meta property="og:article:modified_time" content="2016-10-07T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="text2vec">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="text2vec 0.4" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="/post/text2vec-0-4/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "text2vec 0.4",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2016-10-07",
+    "description": "",
+    "wordCount":  2570 
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/text2vec-0-4/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.18" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>text2vec 0.4
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2016-10-07">7 Oct, 2016</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 13 min
+  &middot; (2570 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/text2vec" class="label label-primary">text2vec</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  
+
+<h1 id="introducing-text2vec-0-4">Introducing text2vec 0.4</h1>
+
+<p>Today I&rsquo;m pleased to announce new major release of <a href="https://github.com/dselivanov/text2vec">text2vec</a> - text2vec 0.4 which is already on CRAN.</p>
+
+<p>For those readers who is not familiar with text2vec - it is an R package which provides an efficient framework with a concise API for text analysis and natural language processing.</p>
+
+<p>With this release I also launched project homepage - <a href="http://text2vec.org">http://text2vec.org</a> where you can find up-to-date documents and tutorials.</p>
+
+<h2 id="functionality">Functionality</h2>
+
+<p>The core functionality at the moment includes:</p>
+
+<ol>
+<li>Fast text vectorization (creation of document-term matrices) on arbitrary n-grams, using vocabulary or feature hashing</li>
+<li><a href="http://www-nlp.stanford.edu/projects/glove/">GloVe</a> word embeddings</li>
+<li>Topic modeling with:
+
+<ul>
+<li>Latent Dirichlet Allocation</li>
+<li>Latent Sematic Analysis</li>
+</ul></li>
+<li>Similarities/distances between matrices (documents in vector space)
+
+<ul>
+<li>Cosine</li>
+<li>Jaccard</li>
+<li><a href="http://vene.ro/blog/word-movers-distance-in-python.html">Relaxed Word Mover&rsquo;s Distance</a></li>
+<li>Euclidean
+<br /></li>
+</ul></li>
+</ol>
+
+<h2 id="what-s-new">What&rsquo;s new?</h2>
+
+<p>First of all, I would like to express special thanks to project contributors - <a href="https://github.com/lmullen">Lincoln Mullen</a>, <a href="https://github.com/qinwf">Qin Wenfeng</a>, <a href="https://github.com/zachmayer">Zach Mayer</a> and <a href="https://github.com/dselivanov/text2vec/graphs/contributors">others</a> (and of course for all of those who reported bugs on the issue tracker!).</p>
+
+<p>A lot of work was done in the last 6 months. Most notable changes are:</p>
+
+<ul>
+<li><strong>Immutable iterators</strong>. Most frustrating and annoying thing in 0.3 was that <code>create_*</code> functions modified input objects (in contrast to usual R behavior with copy-on-modify semantics). So I received a <a href="https://github.com/dselivanov/text2vec/issues/107">lot of bug reports</a> on that. People just didn&rsquo;t understand why they getting empty Document-Term matrices. That was my big mistake, R users assume that function can&rsquo;t modify argument. So I rewrote  iterators with <code>R6</code> classes (thanks to @hadley for suggestion). Learned a lot.</li>
+<li>Now text2vec have <strong>consistent pipe-friendly interface for models</strong>. User should remember few main verbs - <code>fit</code>, <code>transform</code>, <code>fit_transform</code>. More details will be available soon in a separate blog post. Stay tuned.</li>
+<li>Started to work on <strong>models</strong> which can be useful for NLP:
+
+<ul>
+<li><strong>Latent Dirichlet Allocation</strong>. Code for fast Collapsed Gibbs Sampling is based on <a href="https://CRAN.R-project.org/package=lda">lda</a> package by Jonathan Chang, but with a few tweaks (which will be incorporated into <code>lda</code> package in next release). It happened that LDA from text2vec ~ 2x faster that original (and ~10x faster than <a href="https://CRAN.R-project.org/package=topicmodels">topicmodels</a>!)</li>
+<li><strong>Latent Semantic Analysis</strong> (based on updated <a href="https://CRAN.R-project.org/package=irlba">irlba</a> package)</li>
+<li><strong>Tf-Idf</strong> is also rewritten to be consistent with other models interface</li>
+</ul></li>
+<li>Now text2vec contains functions for fast calculation of <strong>similarity between documents</strong> (actually similarities and distances between matrices):
+
+<ul>
+<li>Cosine distance</li>
+<li>Jaccard distance</li>
+<li>Relaxed Word Mover&rsquo;s Distance (which was demonstrated to be very useful on latest kaggle competitions - <a href="http://blog.kaggle.com/2016/08/31/avito-duplicate-ads-detection-winners-interview-2nd-place-team-the-quants-mikel-peter-marios-sonny/">1</a>, <a href="http://blog.kaggle.com/2016/07/27/avito-duplicate-ads-detection-winners-interview-3rd-place-mario-gerard-kele-praveen-gilberto/">2</a>). Dedicated post/tutorial on that will be available soon. Stay tuned</li>
+</ul></li>
+<li><strong>GloVe</strong> word embeddings also significantly updated:
+
+<ul>
+<li>Even faster now - <strong>got ~2-3x performance boost</strong> from code optimizations and usage of single precision <code>float</code> arithmetic (don&rsquo;t forget to enable <code>-ffast-math</code> option for your C++ compiler)</li>
+<li><strong><code>L1</code> regularization</strong> - our new feature (I didn&rsquo;t see implementations our papers where researchers tried to add regularization). Higher quality word embedding for small data sets. More details will be available in separate blog post. Stay tuned</li>
+</ul></li>
+</ul>
+
+<h1 id="updated-tutorials">Updated tutorials</h1>
+
+<p>Check out tutorials on <a href="http://text2vec.org">text2vec.org</a> where I&rsquo;ll be updating documentation on a regular basis.</p>
+
+<p>Below is the updated <strong>introduction to text mining with text2vec</strong>.
+No fancy word clouds. No Jane Austen. Enjoy.</p>
+
+<h2 id="text-analysis-pipeline">Text analysis pipeline</h2>
+
+<p>Most text mining and NLP modeling use <a href="https://en.wikipedia.org/wiki/Bag-of-words_model">bag of words</a> or <a href="https://en.wikipedia.org/wiki/N-gram">bag of n-grams</a> methods. Despite their simplicity, these models usually demonstrate good performance on text categorization and classification tasks. But in contrast to their theoretical simplicity and practical efficiency building bag-of-words models involves technical challenges. This is especially the case in R because of its copy-on-modify semantics.</p>
+
+<p>Let&rsquo;s briefly review some of the steps in a typical text analysis pipeline:</p>
+
+<ol>
+<li>The researcher usually begins by constructing a <a href="https://en.wikipedia.org/wiki/Document-term_matrix">document-term matrix</a> (DTM) or term-co-occurrence  matrix (TCM) from input documents. In other words, the first step is to  vectorize text by creating a map from words or n-grams to a <a href="https://en.wikipedia.org/wiki/Vector_space_model">vector space</a>.</li>
+<li>The researcher fits a model to that DTM. These models might include text classification, topic modeling, similarity search, etc. Fitting the model will include tuning and validating the model.</li>
+<li>Finally the researcher applies the model to new data.</li>
+</ol>
+
+<p>In this vignette we will primarily discuss the first step. Texts themselves can take up a lot of memory, but vectorized texts usually do not, because they are stored as sparse matrices. Because of R&rsquo;s copy-on-modify semantics, it is not easy to iteratively grow a DTM. Thus constructing a DTM, even for a small collections of documents, can be a serious bottleneck for analysts and researchers. It involves reading the whole collection of text documents into RAM and processing it as single vector, which can easily increase memory use by a factor of 2 to 4. The <em>text2vec</em> package solves this problem by providing a better way of constructing a document-term matrix.</p>
+
+<p>Let&rsquo;s demonstrate package core functionality by applying it to a real case problem - sentiment analysis.</p>
+
+<p><em>text2vec</em> package provides the <code>movie_review</code> dataset. It consists of 5000 movie reviews, each of which is marked as positive or negative. We will also use the <a href="https://cran.r-project.org/package=data.table">data.table</a> package for data wrangling.</p>
+
+<p>First of all let&rsquo;s split out dataset into two parts - <em>train</em> and <em>test</em>. We will show how to perform data manipulations on <em>train</em> set and then apply exactly the same manipulations on the <em>test</em> set:</p>
+
+<pre><code class="language-r">library(text2vec)
+library(data.table)
+data(&quot;movie_review&quot;)
+setDT(movie_review)
+setkey(movie_review, id)
+set.seed(2016L)
+all_ids = movie_review$id
+train_ids = sample(all_ids, 4000)
+test_ids = setdiff(all_ids, train_ids)
+train = movie_review[J(train_ids)]
+test = movie_review[J(test_ids)]
+</code></pre>
+
+<h1 id="vectorization">Vectorization</h1>
+
+<p>To represent documents in vector space, we first have to create mappings from terms to term IDS. We call them <em>terms</em> instead of <em>words</em> because they can be arbitrary n-grams not just single words. We represent a set of documents as a sparse matrix, where each row corresponds to a document and each column corresponds to a term. This can be done in 2 ways: using the vocabulary itself or by <a href="https://en.wikipedia.org/wiki/Feature_hashing">feature hashing</a>.</p>
+
+<h2 id="vocabulary-based-vectorization">Vocabulary-based vectorization</h2>
+
+<p>Let&rsquo;s first create a vocabulary-based DTM. Here we collect unique terms from all documents and mark each of them with a unique ID using the <code>create_vocabulary()</code> function. We use an iterator to create the vocabulary.</p>
+
+<pre><code class="language-r"># define preprocessing function and tokenization fucntion
+prep_fun = tolower
+tok_fun = word_tokenizer
+
+it_train = itoken(train$review, 
+             preprocessor = prep_fun, 
+             tokenizer = tok_fun, 
+             ids = train$id, 
+             progressbar = FALSE)
+vocab = create_vocabulary(it_train)
+</code></pre>
+
+<p>What was done here?</p>
+
+<ol>
+<li>We created an iterator over tokens with the <code>itoken()</code> function. All functions prefixed with <code>create_</code> work with these iterators. R users might find this idiom unusual, but the iterator abstraction allows us to hide most of details about input and to process data in memory-friendly chunks.</li>
+<li>We built the vocabulary with the <code>create_vocabulary()</code> function.</li>
+</ol>
+
+<p>Alternatively, we could create list of tokens and reuse it in further steps. Each element of the list should represent a document, and each element should be a character vector of tokens.</p>
+
+<pre><code class="language-r">train_tokens = train$review %&gt;% 
+  prep_fun %&gt;% 
+  tok_fun
+it_train = itoken(train_tokens, 
+                  ids = train$id,
+                  # turn off progressbar because it won't look nice in rmd
+                  progressbar = FALSE)
+
+vocab = create_vocabulary(it_train)
+vocab
+</code></pre>
+
+<pre class="output">
+Number of docs: 4000 
+0 stopwords:  ... 
+ngram_min = 1; ngram_max = 1 
+Vocabulary: 
+                terms terms_counts doc_counts
+    1:     overturned            1          1
+    2: disintegration            1          1
+    3:         vachon            1          1
+    4:     interfered            1          1
+    5:      michonoku            1          1
+   ---                                       
+35592:        penises            2          2
+35593:        arabian            1          1
+35594:       personal          102         94
+35595:            end          921        743
+35596:        address           10         10
+</pre>
+
+<p>Note that <em>text2vec</em> provides a few tokenizer functions (see <code>?tokenizers</code>). These are just simple wrappers for the <code>base::gsub()</code> function and are not very fast or flexible. If you need something smarter or faster you can use the <a href="https://cran.r-project.org/package=tokenizers">tokenizers</a> package which will cover most use cases, or write your own tokenizer using the <a href="https://cran.r-project.org/package=stringi">stringi</a> package.</p>
+
+<p>Now that we have a vocabulary, we can construct a document-term matrix.</p>
+
+<pre><code class="language-r">vectorizer = vocab_vectorizer(vocab)
+t1 = Sys.time()
+dtm_train = create_dtm(it_train, vectorizer)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 0.800817 secs
+</pre>
+
+<p>Now we have a DTM and can check its dimensions.</p>
+
+<pre><code class="language-r">dim(dtm_train)
+</code></pre>
+
+<pre class="output">
+[1]  4000 35596
+</pre>
+
+<pre><code class="language-r">identical(rownames(dtm_train), train$id)
+</code></pre>
+
+<pre class="output">
+[1] TRUE
+</pre>
+
+<p>As you can see, the DTM has  rows, equal to the number of documents, and  columns, equal to the number of unique terms.</p>
+
+<p>Now we are ready to fit our first model. Here we will use the <a href="https://cran.r-project.org/package=glmnet">glmnet</a> package to fit a logistic regression model with an L1 penalty and 4 fold cross-validation.</p>
+
+<pre><code class="language-r">library(glmnet)
+NFOLDS = 4
+t1 = Sys.time()
+glmnet_classifier = cv.glmnet(x = dtm_train, y = train[['sentiment']], 
+                              family = 'binomial', 
+                              # L1 penalty
+                              alpha = 1,
+                              # interested in the area under ROC curve
+                              type.measure = &quot;auc&quot;,
+                              # 5-fold cross-validation
+                              nfolds = NFOLDS,
+                              # high value is less accurate, but has faster training
+                              thresh = 1e-3,
+                              # again lower number of iterations for faster training
+                              maxit = 1e3)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 3.485586 secs
+</pre>
+
+<pre><code class="language-r">plot(glmnet_classifier)
+</code></pre>
+
+<p><img src="../../articles/figure/2016-10-07-text2vec-0-4-fit_1-1.png" alt="plot of chunk fit_1" /></p>
+
+<pre><code class="language-r">print(paste(&quot;max AUC =&quot;, round(max(glmnet_classifier$cvm), 4)))
+</code></pre>
+
+<pre class="output">
+[1] &quot;max AUC = 0.923&quot;
+</pre>
+
+<p>We have successfully fit a model to our DTM. Now we can check the model&rsquo;s performance on test data.
+Note that we use exactly the same functions from prepossessing and tokenization. Also we reuse/use the same <code>vectorizer</code> - function which maps terms to indices.</p>
+
+<pre><code class="language-r"># Note that most text2vec functions are pipe friendly!
+it_test = test$review %&gt;% 
+  prep_fun %&gt;% 
+  tok_fun %&gt;% 
+  itoken(ids = test$id, 
+         # turn off progressbar because it won't look nice in rmd
+         progressbar = FALSE)
+
+dtm_test = create_dtm(it_test, vectorizer)
+
+preds = predict(glmnet_classifier, dtm_test, type = 'response')[,1]
+glmnet:::auc(test$sentiment, preds)
+</code></pre>
+
+<pre class="output">
+[1] 0.916697
+</pre>
+
+<p>As we can see, performance on the test data is roughly the same as we expect from cross-validation.</p>
+
+<h3 id="pruning-vocabulary">Pruning vocabulary</h3>
+
+<p>We can note, however, that the training time for our model was quite high. We can reduce it and also significantly improve accuracy by pruning the vocabulary.</p>
+
+<p>For example, we can find words <em>&ldquo;a&rdquo;, &ldquo;the&rdquo;, &ldquo;in&rdquo;, &ldquo;I&rdquo;, &ldquo;you&rdquo;, &ldquo;on&rdquo;</em>, etc in almost all documents, but they do not provide much useful information. Usually such words are called <a href="https://en.wikipedia.org/wiki/Stop_words">stop words</a>. On the other hand, the corpus also contains very uncommon terms, which are contained in only a few documents. These terms are also useless, because we don&rsquo;t have sufficient statistics for them. Here we will remove pre-defined stopwords, very common and very unusual terms.</p>
+
+<pre><code class="language-r">stop_words = c(&quot;i&quot;, &quot;me&quot;, &quot;my&quot;, &quot;myself&quot;, &quot;we&quot;, &quot;our&quot;, &quot;ours&quot;, &quot;ourselves&quot;, &quot;you&quot;, &quot;your&quot;, &quot;yours&quot;)
+t1 = Sys.time()
+vocab = create_vocabulary(it_train, stopwords = stop_words)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 0.439589 secs
+</pre>
+
+<pre><code class="language-r">pruned_vocab = prune_vocabulary(vocab, 
+                                 term_count_min = 10, 
+                                 doc_proportion_max = 0.5,
+                                 doc_proportion_min = 0.001)
+vectorizer = vocab_vectorizer(pruned_vocab)
+# create dtm_train with new pruned vocabulary vectorizer
+t1 = Sys.time()
+dtm_train  = create_dtm(it_train, vectorizer)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 0.6738439 secs
+</pre>
+
+<pre><code class="language-r">dim(dtm_train)
+</code></pre>
+
+<pre class="output">
+[1] 4000 6585
+</pre>
+
+<p>Note that the new DTM has many fewer columns than the original DTM. This usually leads to both accuracy improvement (because we removed &ldquo;noise&rdquo;) and reduction of the training time.</p>
+
+<p>Also we need to create DTM for test data with the same vectorizer:</p>
+
+<pre><code class="language-r">dtm_test   = create_dtm(it_test, vectorizer)
+dim(dtm_test)
+</code></pre>
+
+<pre class="output">
+[1] 1000 6585
+</pre>
+
+<h2 id="n-grams">N-grams</h2>
+
+<p>Can we improve the model? Definitely - we can use n-grams instead of words. Here we will use up to 2-grams:</p>
+
+<pre><code class="language-r">t1 = Sys.time()
+vocab = create_vocabulary(it_train, ngram = c(1L, 2L))
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 1.47972 secs
+</pre>
+
+<pre><code class="language-r">vocab = vocab %&gt;% prune_vocabulary(term_count_min = 10, 
+                   doc_proportion_max = 0.5)
+
+bigram_vectorizer = vocab_vectorizer(vocab)
+
+dtm_train = create_dtm(it_train, bigram_vectorizer)
+
+t1 = Sys.time()
+glmnet_classifier = cv.glmnet(x = dtm_train, y = train[['sentiment']], 
+                 family = 'binomial', 
+                 alpha = 1,
+                 type.measure = &quot;auc&quot;,
+                 nfolds = NFOLDS,
+                 thresh = 1e-3,
+                 maxit = 1e3)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 2.973802 secs
+</pre>
+
+<pre><code class="language-r">plot(glmnet_classifier)
+</code></pre>
+
+<p><img src="../../articles/figure/2016-10-07-text2vec-0-4-ngram_dtm_1-1.png" alt="plot of chunk ngram_dtm_1" /></p>
+
+<pre><code class="language-r">print(paste(&quot;max AUC =&quot;, round(max(glmnet_classifier$cvm), 4)))
+</code></pre>
+
+<pre class="output">
+[1] &quot;max AUC = 0.9217&quot;
+</pre>
+
+<p>Seems that usage of n-grams improved our model a little bit more. Let&rsquo;s check performance on test dataset:</p>
+
+<pre><code class="language-r"># apply vectorizer
+dtm_test = create_dtm(it_test, bigram_vectorizer)
+preds = predict(glmnet_classifier, dtm_test, type = 'response')[,1]
+glmnet:::auc(test$sentiment, preds)
+</code></pre>
+
+<pre class="output">
+[1] 0.9268974
+</pre>
+
+<p>Further tuning is left up to the reader.</p>
+
+<h2 id="feature-hashing">Feature hashing</h2>
+
+<p>If you are not familiar with feature hashing (the so-called &ldquo;hashing trick&rdquo;) I recommend you start with the <a href="https://en.wikipedia.org/wiki/Feature_hashing">Wikipedia article</a>, then read the <a href="http://alex.smola.org/papers/2009/Weinbergeretal09.pdf">original paper</a> by a Yahoo! research team. This technique is very fast because we don&rsquo;t have to perform a lookup over an associative array. Another benefit is that it leads to a very low memory footprint, since we can map an arbitrary number of features into much more compact space. This method was popularized by Yahoo! and is widely used in <a href="https://github.com/JohnLangford/vowpal_wabbit/">Vowpal Wabbit</a>.</p>
+
+<p>Here is how to use feature hashing in <em>text2vec</em>.</p>
+
+<pre><code class="language-r">h_vectorizer = hash_vectorizer(hash_size = 2 ^ 14, ngram = c(1L, 2L))
+
+t1 = Sys.time()
+dtm_train = create_dtm(it_train, h_vectorizer)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 1.51502 secs
+</pre>
+
+<pre><code class="language-r">t1 = Sys.time()
+glmnet_classifier = cv.glmnet(x = dtm_train, y = train[['sentiment']], 
+                             family = 'binomial', 
+                             alpha = 1,
+                             type.measure = &quot;auc&quot;,
+                             nfolds = 5,
+                             thresh = 1e-3,
+                             maxit = 1e3)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 4.494137 secs
+</pre>
+
+<pre><code class="language-r">plot(glmnet_classifier)
+</code></pre>
+
+<p><img src="../../articles/figure/2016-10-07-text2vec-0-4-hash_dtm-1.png" alt="plot of chunk hash_dtm" /></p>
+
+<pre><code class="language-r">print(paste(&quot;max AUC =&quot;, round(max(glmnet_classifier$cvm), 4)))
+</code></pre>
+
+<pre class="output">
+[1] &quot;max AUC = 0.8937&quot;
+</pre>
+
+<pre><code class="language-r">dtm_test = create_dtm(it_test, h_vectorizer)
+
+preds = predict(glmnet_classifier, dtm_test , type = 'response')[, 1]
+glmnet:::auc(test$sentiment, preds)
+</code></pre>
+
+<pre class="output">
+[1] 0.9036685
+</pre>
+
+<p>As you can see our AUC is a bit worse but DTM construction time is considerably lower. On large collections of documents this can be a significant advantage.</p>
+
+<h1 id="basic-transformations">Basic transformations</h1>
+
+<p>Before doing analysis it usually can be useful to <em>transform</em> DTM. For example lengths of the documents in collection can significantly vary. In this case it can be useful to apply normalization.</p>
+
+<h2 id="normalization">Normalization</h2>
+
+<p>By &ldquo;normalization&rdquo; we assume <em>transformation</em> of the <em>rows</em> of DTM so we adjust values measured on different scales to a notionally common scale. For the case when length of the documents vary we can apply &ldquo;L1&rdquo; normalization. It means we will transform rows in a way that <code>sum</code> of the row values will be equal to <code>1</code>:</p>
+
+<pre><code class="language-r">dtm_train_l1_norm = normalize(dtm_train, &quot;l1&quot;)
+</code></pre>
+
+<p>By this transformation we should improve the quality of data preparation.</p>
+
+<h2 id="tf-idf">TF-IDF</h2>
+
+<p>Another popular technique is <a href="https://en.wikipedia.org/wiki/Tf%E2%80%93idf">TF-IDF</a> transformation.
+We can (and usually should) apply it to our DTM. It will not only normalize DTM, but also increase the weight of terms which are specific to a single document or handful of documents and decrease the weight for terms used in most documents:</p>
+
+<pre><code class="language-r">vocab = create_vocabulary(it_train)
+vectorizer = vocab_vectorizer(vocab)
+dtm_train = create_dtm(it_train, vectorizer)
+
+# define tfidf model
+tfidf = TfIdf$new()
+# fit model to train data and transform train data with fitted model
+dtm_train_tfidf = fit_transform(dtm_train, tfidf)
+# tfidf modified by fit_transform() call!
+# apply pre-trained tf-idf transformation to test data
+dtm_test_tfidf  = create_dtm(it_test, vectorizer) %&gt;% 
+  transform(tfidf)
+</code></pre>
+
+<p>Note that here we first time touched <em>model</em> object in <em>text2vec</em>. At this moment the user should remember several important things about <em>text2vec</em> models:</p>
+
+<ol>
+<li>Models can be fitted on a given data (train) and applied to unseen data (test)</li>
+<li><strong>Models are mutable</strong> - once you will pass model to <code>fit()</code> or <code>fit_transform()</code> function, model will be modifed by it.</li>
+<li>After model is fitted, it can be applied to a new data with <code>transform(new_data, fitted_model)</code> method.</li>
+</ol>
+
+<p>More detailed overview of models and models API will be available soon in a separate vignette.</p>
+
+<p>Once we have tf-idf reweighted DTM we can fit our linear classifier again:</p>
+
+<pre><code class="language-r">t1 = Sys.time()
+glmnet_classifier = cv.glmnet(x = dtm_train_tfidf, y = train[['sentiment']], 
+                              family = 'binomial', 
+                              alpha = 1,
+                              type.measure = &quot;auc&quot;,
+                              nfolds = NFOLDS,
+                              thresh = 1e-3,
+                              maxit = 1e3)
+print(difftime(Sys.time(), t1, units = 'sec'))
+</code></pre>
+
+<pre class="output">
+Time difference of 3.033687 secs
+</pre>
+
+<pre><code class="language-r">plot(glmnet_classifier)
+</code></pre>
+
+<p><img src="../../articles/figure/2016-10-07-text2vec-0-4-fit_2-1.png" alt="plot of chunk fit_2" /></p>
+
+<pre><code class="language-r">print(paste(&quot;max AUC =&quot;, round(max(glmnet_classifier$cvm), 4)))
+</code></pre>
+
+<pre class="output">
+[1] &quot;max AUC = 0.9146&quot;
+</pre>
+
+<p>Let&rsquo;s check the model performance on the test dataset:</p>
+
+<pre><code class="language-r">preds = predict(glmnet_classifier, dtm_test_tfidf, type = 'response')[,1]
+glmnet:::auc(test$sentiment, preds)
+</code></pre>
+
+<pre class="output">
+[1] 0.9053246
+</pre>
+
+<p>Usually <em>tf-idf</em> transformation <strong>significantly</strong> improve performance on most of the dowstream tasks.</p>
+
+<h1 id="what-s-next">What&rsquo;s next</h1>
+
+<p>Try <code>text2vec</code>, share your thoughts in comments. I&rsquo;m waiting for feedback.</p>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/text2vec-0-3/" title="text2vec 0.3">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/" title="Large data, feature hashing and online learning">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec/">Analyzing texts with text2vec package</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-and-mssql/">Working with MS SQL server on non-windows systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/installing-cuda-toolkit-and-gputools/">Installing cuda toolkit and related R packages</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li><li><a href="/tags/gpgpu">gpgpu</a></li><li><a href="/tags/lsh">lsh</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

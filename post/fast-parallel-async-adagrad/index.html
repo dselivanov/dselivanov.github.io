@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>text2vec GloVe implementation details  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="" />
+
+<meta name="keywords" content="text2vec, Rcpp, RcppParallel, GloVe, ">
+
+
+<meta property="og:title" content="text2vec GloVe implementation details  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/fast-parallel-async-adagrad/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content=""/>
+<meta property="og:article:published_time" content="2016-01-09T00:00:00Z" />
+<meta property="og:article:modified_time" content="2016-01-09T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="text2vec">
+    
+<meta property="og:article:tag" content="Rcpp">
+    
+<meta property="og:article:tag" content="RcppParallel">
+    
+<meta property="og:article:tag" content="GloVe">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="text2vec GloVe implementation details" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="/post/fast-parallel-async-adagrad/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "text2vec GloVe implementation details",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2016-01-09",
+    "description": "",
+    "wordCount":  1811 
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/fast-parallel-async-adagrad/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.18" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>text2vec GloVe implementation details
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2016-01-09">9 Jan, 2016</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 9 min
+  &middot; (1811 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/text2vec" class="label label-primary">text2vec</a>
+  
+  <a href="/tags/rcpp" class="label label-primary">Rcpp</a>
+  
+  <a href="/tags/rcppparallel" class="label label-primary">RcppParallel</a>
+  
+  <a href="/tags/glove" class="label label-primary">GloVe</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  
+
+<p>Before reading this post, I very recommend to read:</p>
+
+<ol>
+<li>Orignal <a href="http://www-nlp.stanford.edu/projects/glove/glove.pdf">GloVe paper</a></li>
+<li><a href="http://www.foldl.me/2014/glove-python/">Jon Gauthier&rsquo;s post</a>, which provides detailed explanation of python implementation. This post helps me a lot with C++ implementation.</li>
+</ol>
+
+<h2 id="word-embeddings">Word embeddings</h2>
+
+<p>After Tomas Mikolov et al. released <a href="https://code.google.com/p/word2vec/">word2vec</a> tool, there was a boom of articles about words vector representations. One of the greatest is <a href="http://nlp.stanford.edu/projects/glove/">GloVe</a>, which did a big thing by explaining how such algorithms work. It also refolmulates word2vec optimization as a special kind of factoriazation for word cooccurences matrix.</p>
+
+<p>This post is devided into two main parts:</p>
+
+<ol>
+<li>Very brief introduction into GloVe algorithm.</li>
+<li>Details of implementation. I will show how to write fast parallel asynchronous SGD with RcppParallel with adaptive learning rate in C++ using Intel TBB and <a href="http://rcppcore.github.io/RcppParallel/">RcppParallel</a>.</li>
+</ol>
+
+<h2 id="introduction-to-glove-algorithm">Introduction to GloVe algorithm</h2>
+
+<p>GloVe algorithm consists of the following steps:</p>
+
+<ol>
+<li>Collect word cooccurence statistics in the form of word coocurence matrix <code>$X$</code>. Each element <code>$X_{ij}$</code> of such matrix represents measure of how often <em>word i</em> appears in context of <em>word j</em>. Usually we scan our corpus in the following manner: for each term we look for context terms within some area - <em>window_size</em> before and <em>window_size</em> after. Also we give less weight for more distant words (usually  <code>$decay = 1/offset$</code>).</li>
+
+<li><p>Define soft constraint for each word pair:  <code>$w_i^Tw_j + b_i + b_j = log(X_{ij})$</code> Here <code>$w_i$</code> - vector for main word, <code>$w_j$</code> - vector for context word, <code>$b_i$</code>, <code>$b_j$</code> - scalar biases for main and context words.</p></li>
+
+<li><p>Define cost function:</p></li>
+</ol>
+
+<div>`$$J = \sum_{i=1}^V \sum_{j=1}^V \; f(X_{ij}) ( w_i^T w_j + b_i + b_j - \log X_{ij})^2$$`</div>
+
+<p>Here <code>$f$</code> is a weighting function which help us to prevent learning only from exremely common word pairs. GloVe authors choose the following function:</p>
+
+<div>`$$ (f(X_{ij}) = \begin{cases}(\frac{X_{ij}}{x_{max}})^\alpha & \text{if } X_{ij} < XMAX \\1 & \text{otherwise}\end{cases} $$` </div>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>The main challenges I faced during implementation:</p>
+
+<ol>
+<li>Efficient cooccurence matrix creation.</li>
+<li>Implementation of efficient SGD for objective cost function minimization.</li>
+</ol>
+
+<h3 id="cooccurence-matrix-creation">Cooccurence matrix creation</h3>
+
+<p>There are a few main issues with term cooccurence matrix (<em>tcm</em>):</p>
+
+<ol>
+<li><em>tcm</em> should be sparse. We should be able to construct <em>tcm</em> for large vocabularies ( &gt; 100k words).</li>
+<li>Fast lookups/inserts.</li>
+</ol>
+
+<p>To meet requirement of sparsity we need to store data in associative array. <code>unordered_map</code> is good candidate because of <code>$O(1)$</code> lookups/inserts complexity. I ended with <code>std::unordered_map&lt; std::pair&lt;uint32_t, uint32_t&gt;, T &gt;</code> as container for sparse matrix in triplet form. Performance of <code>unordered_map</code> heavily depends on underlying hash fucntion. Fortunately, we can pack <code>pair&lt;uint32_t, uint32_t&gt;</code> into single <code>uint64_t</code> in a determenistic way without any collisions.<br />
+Hash function for <code>std::pair&lt;uint32_t, uint32_t&gt;</code> will look like:</p>
+
+<pre><code class="language-cpp">namespace std {
+  template &lt;&gt;
+  struct hash&lt;std::pair&lt;uint32_t, uint32_t&gt;&gt;
+  {
+    inline uint64_t operator()(const std::pair&lt;uint32_t, uint32_t&gt;&amp; k) const
+    {
+      return (uint64_t) k.first &lt;&lt; 32 | k.second;
+    }
+  };
+}
+</code></pre>
+
+<p>For details see <a href="http://stackoverflow.com/a/24693169/1069256">this</a> and <a href="http://stackoverflow.com/questions/2768890">this</a> stackoverflow questions.</p>
+
+<p>Also note, that our cooccurence matrix is symmetrical, so internally we will store only elements above main diagonal.</p>
+
+<h3 id="stochastic-gradient-descent">Stochastic gradient descent</h3>
+
+<p>Now we should implement efficient parallel asynchronous stochastic gradient descent for word cooccurence matrix factorization, which is proposed in <a href="http://nlp.stanford.edu/projects/glove/">GloVe</a> paper. Interesting thing - SGD inherently is serial algoritms, but when your problem is sparse, you can do asynchronous updates without any locks and achieve speedup proportional to number of cores on your machine! If you didn&rsquo;t read <a href="https://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf">HOGWILD!</a>, I recomment to do that.</p>
+
+<p>Let me remind formulation of SGD. We try to move <code>$x_t$</code> parameters in a minimizing direction, given by <code>$−g_t$</code> with a learning rate <code>$\alpha$</code>:
+<code>$x_{t+1} = x_t − \alpha g_t$</code></p>
+
+<p>So, we have to calculate gradients for our cost function</p>
+
+<div> $$ J = \sum_{i=1}^V \sum_{j=1}^V f(X\_{ij}) ( w_i^T w_j + b_i + b_j - \log X_{ij} )^2 $$ </div> 
+<div> $$\frac{\partial J}{\partial w_i} = f(X_{ij}) w_j ( w_i^T w_j + b_i + b_j - \log X_{ij})$$ </div>
+<div> $$\frac{\partial J}{\partial w_j} = f(X_{ij}) w_i ( w_i^T w_j + b_i + b_j - \log X_{ij})$$ </div>
+<div> $$\frac{\partial J}{\partial b_i} = f(X_{ij}) (w_i^T w_j + b_i + b_j - \log X_{ij})$$ </div>
+<div> $$\frac{\partial J}{\partial b_j} = f(X_{ij}) (w_i^T w_j + b_i + b_j - \log X_{ij})$$ </div>
+
+<h3 id="adagrad">AdaGrad</h3>
+
+<p>We will use modification of SGD - <a href="http://www.magicbroom.info/Papers/DuchiHaSi10.pdf">AdaGrad</a> algoritm. It automaticaly determines per-feature learning rate by tracking historical gradients, so that frequently occurring features
+in the gradients get small learning rates and infrequent features get higher ones. For AdaGrad implementation details see excellent <a href="http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf">Notes on AdaGrad</a> by Chris Dyer.</p>
+
+<p>Formulation of AdaGrad step <code>$t$</code> and feature <code>$i$</code> is the following:</p>
+
+<div>`$$x_{t+1, i} = x_{t, i} − \frac{\alpha}{\sqrt{\sum_{\tau=1}^{t-1}} g_{\tau,i}^2} g_{t,i}$$`</div>
+
+<p>As we can see, at each iteration <code>$t$</code> we need to keep track of sum over all historical gradients.</p>
+
+<h3 id="parallel-asynchronous-adagrad">Parallel asynchronous AdaGrad</h3>
+
+<p>Actually we will use modification of AdaGrad - <em>HOGWILD-style</em> asynchronous AdaGrad :-) Main idea of <em>HOGWILD!</em> algorithm is very simple - don&rsquo;t use any synchronizations. If your problem is sparse, allow threads to overwrite each other! This works and works fine. Again, see <a href="http://www.eecs.berkeley.edu/~brecht/papers/hogwildTR.pdf">HOGWILD!</a> paper for details and theoretical proof.</p>
+
+<h3 id="code">Code</h3>
+
+<p>Now lets put all into the code.</p>
+
+<p>As seen from the analysis above, <code>GloveFit</code> class should consist of the following parameters:</p>
+
+<ol>
+<li>word vectors <code>w_i</code>, <code>w_j</code> (for main and context words).</li>
+<li>biases <code>b_i</code>, <code>b_j</code>.</li>
+<li>word vectors square gradients <code>grad_sq_w_i</code>, <code>grad_sq_w_j</code> for adaptive learning rates.</li>
+<li>word biases square gradients <code>grad_sq_b_i</code>, <code>grad_sq_b_j</code> for adaptive learning rates.</li>
+<li><code>learning_rate</code>, <code>max_cost</code> and other scalar model parameters.</li>
+</ol>
+
+<pre><code class="language-cpp">class GloveFit {
+private:
+  size_t vocab_size, word_vec_size;
+  double x_max, learning_rate;
+  // see https://github.com/maciejkula/glove-python/pull/9#issuecomment-68058795
+  // clips the cost for numerical stability
+  double max_cost;
+  // initial learning rate
+  double alpha;
+  // word vecrtors
+  vector&lt;vector&lt;double&gt; &gt; w_i, w_j;
+  // word biases
+  vector&lt;double&gt; b_i, b_j;
+  // word vectors square gradients
+  vector&lt;vector&lt;double&gt; &gt; grad_sq_w_i, grad_sq_w_j;
+  // word biases square gradients
+  vector&lt;double&gt; grad_sq_b_i, grad_sq_b_j;
+}
+</code></pre>
+
+<h3 id="single-iteration">Single iteration</h3>
+
+<p>Now we should <a href="https://github.com/dselivanov/text2vec/blob/1341dc73874c10dc78a957d3a5838feb45d9bc87/src/GloveFit.h#L8-L41">initialize</a> parameters and perform iteration of SGD:</p>
+
+<pre><code class="language-bash">//init cost
+global_cost = 0
+// assume tcm is sparse matrix in triplet form - &lt;i, j, x&gt;
+for_each (&lt;i, j, x&gt; ) {
+  //compute cost function and add it to global cost
+  global_cost += J(x)
+  //Compute gradients for bias terms and perform adaptive updates for bias terms
+  //Compute gradients for word vector terms and perform adaptive updates for word vectors
+  //Update squared gradient sums for word vectors
+  //Update squared gradient sums for biases
+}
+return global_cost;
+</code></pre>
+
+<h3 id="openmp">OpenMP</h3>
+
+<p>As discussed above, all these steps can be performed in parallel loop (over all non-zero word-coocurence scores). This can be easily done via OpenMP <code>parallel for</code> and reduction: <code>#pragma omp parallel for reduction(+:global_cost)</code>. <strong>But there is one significant issue</strong> with this approach - it is very hard to make portable R-package with OpenMP support. By default it will work only on linux distributions because:</p>
+
+<ol>
+<li>default <code>clang</code> on OS X doesn&rsquo;t support OpenMP (of course you can install <code>clang-omp</code> or <code>gcc</code> with <code>brew</code> but this also could be tricky).</li>
+<li>Rtools starts support of OpenMP on Windows only in 2015. But even modern implementation has substantial overheads.</li>
+</ol>
+
+<p>For more details see <a href="https://cran.r-project.org/doc/manuals/r-release/R-exts.html#OpenMP-support">OpenMP-support</a> section of Writing R Extensions manual.</p>
+
+<h3 id="intel-tbb">Intel TBB</h3>
+
+<p>Luckily we have a better alternative - <a href="https://www.threadingbuildingblocks.org/">Intel Thread Building Blocks</a> library and <a href="http://rcppcore.github.io/RcppParallel/">RcppParallel</a> package which provides <code>RVector</code> and <code>RMatrix</code> wrapper classes for safe and convenient access to R data structures in a multi-threaded environment! Moreover <strong>it <em>just works</em> on main platforms - OS X, Windows, Linux</strong>.</p>
+
+<p>Using TBB is a little bit trickier than writing simple OpenMP <code>#pragma</code> directives. You should implement <em>functor</em> which operates on a chunk of data and call <code>parallelReduce</code> or <code>parallelFor</code> on entire data collection. You can find useful (and simple) examples at <a href="http://rcppcore.github.io/RcppParallel/#examples">RcppParallel examples</a> section.</p>
+
+<h3 id="putting-it-all-together">Putting it all together</h3>
+
+<p>For now suppose we have <code>partial_fit</code> method in <code>GloveFit</code> class with following signature (<a href="https://github.com/dselivanov/text2vec/blob/1341dc73874c10dc78a957d3a5838feb45d9bc87/src/GloveFit.h#L52-L134">see actual code here</a>):</p>
+
+<pre><code class="language-cpp">double partial_fit( size_t begin, 
+                    size_t end, 
+                    const RVector&lt;int&gt; &amp;x_irow, 
+                    const RVector&lt;int&gt; &amp;x_icol, 
+                    const RVector&lt;double&gt; &amp;x_val);
+</code></pre>
+
+<p>It takes</p>
+
+<ol>
+<li><em>tcm</em> in sparse triplet form <code>&lt;x_irow, x_icol, x_val&gt;</code><br /></li>
+<li><code>begin</code> and <code>end</code> pointers for a range on which we want to perform our SGD.</li>
+</ol>
+
+<p>Then it performs SGD steps over this range - <a href="#single-iteration">updates word vectors, gradients, etc</a>. As a result it returns value of accumulated cost function. Note that internally this method modifies input object.</p>
+
+<p>Also note that signature of <code>partial_fit</code> is very similar to what we have to implement in our TBB functor. Now we are ready to write it:</p>
+
+<pre><code class="language-cpp">struct AdaGradIter : public Worker {
+  RVector&lt;int&gt; x_irow, x_icol;
+  RVector&lt;double&gt; x_val;
+  GloveFit &amp;fit;
+
+  int vocab_size, word_vec_size, num_iters, x_max;
+  double learning_rate;
+
+  // accumulated value
+  double global_cost;
+
+  // function to set global_cost = 0 between iterations
+  void set_cost_zero() { global_cost = 0; };
+  
+  //init function to use between iterations
+  void init(const IntegerVector &amp;x_irowR,
+            const IntegerVector &amp;x_icolR,
+            const NumericVector &amp;x_valR,
+            const IntegerVector &amp;iter_orderR,
+            GloveFit &amp;fit) {
+    x_irow = RVector&lt;int&gt;(x_irowR);
+    x_icol = RVector&lt;int&gt;(x_icolR);
+    x_val  = RVector&lt;double&gt; (x_valR);
+    iter_order = RVector&lt;int&gt; (iter_orderR);
+    fit = fit;
+    global_cost = 0;
+  }
+  // dummy constructor
+  // used at first initialization of GloveFitter
+  AdaGradIter(GloveFit &amp;fit):
+    x_irow(IntegerVector(0)),
+    x_icol(IntegerVector(0)),
+    x_val(NumericVector(0)),
+    iter_order(IntegerVector(0)),
+    fit(fit) {};
+
+  // constructors
+  AdaGradIter(const IntegerVector &amp;x_irowR,
+              const IntegerVector &amp;x_icolR,
+              const NumericVector &amp;x_valR,
+              GloveFit &amp;fit):
+    x_irow(x_irowR), x_icol(x_icolR), x_val(x_valR),
+    fit(fit), global_cost(0) {}
+    
+  // constructor called at split
+  AdaGradIter(const AdaGradIter&amp; AdaGradIter, Split):
+    x_irow(AdaGradIter.x_irow), x_icol(AdaGradIter.x_icol), x_val(AdaGradIter.x_val), 
+    fit(AdaGradIter.fit), global_cost(0) {}
+
+  // process just the elements of the range
+  void operator()(size_t begin, size_t end) {
+    global_cost += this-&gt;fit.partial_fit(begin, end, x_irow, x_icol, x_val);
+  }
+  
+  // join my value with that of another global_cost
+  void join(const AdaGradIter&amp; rhs) {
+    global_cost += rhs.global_cost;
+  }
+};
+</code></pre>
+
+<p>As you can see, it is very similar to example form RcppParallel site. One difference - it has side-effects. By calling <code>partial_fit</code> it modifies internal state of the input instance of <code>GloveFit</code> class (which actually contains our GloVe model).</p>
+
+<p>Now lets write <code>GloveFitter</code> class which will be callable from R via <code>Rcpp-modules</code>. It will act as interface for fitting our model and take all input model parameters such as vocabulary size, desired word vectors size, initial AdaGrad learning rate, etc. Also we want to track cost between iterations and want to be able to perform some early stopping strategy between SGD iterations. For that purpose we keep our model in C++ class, so we can modify it &ldquo;in place&rdquo; at each SGD iteration (which can be problematic in R)</p>
+
+<pre><code class="language-cpp">class GloveFitter {
+public:
+  GloveFitter(size_t vocab_size,
+            size_t word_vec_size,
+            uint32_t x_max,
+            double learning_rate,
+            double max_cost,
+            double alpha):
+  gloveFit(vocab_size,  word_vec_size, learning_rate, x_max, max_cost, alpha),
+  adaGradIter(gloveFit) {}
+  
+  // function to set cost to zero from R (used between SGD iterations)
+  void set_cost_zero() {adaGradIter.set_cost_zero();};
+
+  double fit_chunk(const IntegerVector x_irow,
+                   const IntegerVector  x_icol,
+                   const NumericVector x_val,
+                   const IntegerVector iter_order) {
+    
+    this-&gt;adaGradIter.init(x_irow, x_icol, x_val, iter_order, gloveFit);
+    // 
+    parallelReduce(0, x_irow.size(), adaGradIter);
+    return (this-&gt;adaGradIter.global_cost);
+  }
+  // export word vectors to R
+  List get_word_vectors() {
+    return List::create(_[&quot;word_vectors&quot;] = adaGradIter.fit.get_word_vectors());
+  }
+
+private:
+  GloveFit gloveFit;
+  AdaGradIter adaGradIter;
+};
+</code></pre>
+
+<p>And create wrapper with <code>Rcpp-Modules</code>:</p>
+
+<pre><code class="language-cpp">RCPP_MODULE(GloveFitter) {
+  class_&lt; GloveFitter &gt;( &quot;GloveFitter&quot; )
+  //&lt;vocab_size, word_vec_size, x_max, learning_rate, grain_size, max_cost, alpha&gt;
+  .constructor&lt;size_t, size_t, uint32_t, double, uint32_t, double, double&gt;()
+  .method( &quot;get_word_vectors&quot;, &amp;GloveFitter::get_word_vectors, &quot;returns word vectors&quot;)
+  .method( &quot;set_cost_zero&quot;, &amp;GloveFitter::set_cost_zero, &quot;sets cost to zero&quot;)
+  .method( &quot;fit_chunk&quot;, &amp;GloveFitter::fit_chunk, &quot;process TCM data chunk&quot;)
+  ;
+}
+</code></pre>
+
+<p>Now we can use <code>GloveFitter</code> class from R:</p>
+
+<pre><code class="language-r">fit &lt;- new( GloveFitter, vocabulary_size, word_vectors_size, x_max, 
+            learning_rate, grain_size, max_cost, alpha)
+NUM_ITER &lt;- 10
+for(i in seq_len(NUM_ITER)) {
+  cost &lt;- fit$fit_chunk(tcm@i, tcm@j, tcm@x, iter_order)
+  print(cost)
+  fit$set_cost_zero()
+}
+</code></pre>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/glove-enwiki/" title="GloVe vs word2vec revisited.">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/r-read-hdfs/" title="Read from hdfs with R. Brief overview of SparkR.">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec/">Analyzing texts with text2vec package</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-and-mssql/">Working with MS SQL server on non-windows systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/installing-cuda-toolkit-and-gputools/">Installing cuda toolkit and related R packages</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li><li><a href="/tags/gpgpu">gpgpu</a></li><li><a href="/tags/lsh">lsh</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

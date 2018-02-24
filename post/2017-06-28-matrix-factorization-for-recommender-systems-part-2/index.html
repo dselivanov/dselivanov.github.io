@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Matrix factorization for recommender systems (part 2)  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="Applications of Weigted Alternating Least Squares to recommender systems" />
+
+<meta name="keywords" content="recommender system, implicit feedback, ">
+
+
+<meta property="og:title" content="Matrix factorization for recommender systems (part 2)  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content="Applications of Weigted Alternating Least Squares to recommender systems"/>
+<meta property="og:article:published_time" content="2017-06-28T00:00:00Z" />
+<meta property="og:article:modified_time" content="2017-06-28T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="recommender system">
+    
+<meta property="og:article:tag" content="implicit feedback">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Matrix factorization for recommender systems (part 2)" />
+<meta name="twitter:description" content="Applications of Weigted Alternating Least Squares to recommender systems" />
+<meta name="twitter:url" content="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Matrix factorization for recommender systems (part 2)",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2017-06-28",
+    "description": "Applications of Weigted Alternating Least Squares to recommender systems",
+    "wordCount": 2606
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.21" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Matrix factorization for recommender systems (part 2)
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2017-06-28">28 Jun, 2017</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 13 min
+  &middot; (2606 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/r" class="label label-primary">R</a>
+  
+  <a href="/tags/recommender-systems" class="label label-primary">recommender-systems</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  <p>In <a href="http://dsnotes.com/post/2017-05-28-matrix-factorization-for-recommender-systems/">previous post</a> I explained Weigted Alternating Least Squares algorithm for matrix factorization. This post will be more practical - we will build a model which will recommend artists recommendations based on history of track listenings.</p>
+<div id="design-of-evaluation-and-cross-validation" class="section level1">
+<h1>Design of evaluation and cross validation</h1>
+<p>Before we will go to modeling we need to discuss how we will validate our model. At the very beginning I would like to highlight that final validation should be done online through A/B testing (or more advanced “bandit” approach). It is very hard to design offline validation wich will be perfectly correlated with online testing. Here however we will focus on offline validation since it necessary for good choice of the hyperparameters of any machine learning model.</p>
+<p>Before building recommender system <strong>data scientists should define evaluation metric which is highly correlated with business targets</strong>. This is ticky part. For example solutions of the Netflix prize competiton were evaluated by RMSE of the rating predictions and ground truth ratings. But does RMSE really make sense? How it is correlated with business goals? Answers on these questions are not obvious.</p>
+<p>Thinking logically we can come to the conclusion that in the simplest (but widely used) scenario goal is just to increase probabilyty of the click to product (implying this could lead purchase or engagement).</p>
+<p>In this case task is to show <strong>small list</strong> of highly relevant items. Which means algorithm should really <strong>care only about precision</strong>. Also list of recommended items usually should be ordered, so most relevant items appear at first places and hence have more chance to be seen. This turns optimization into <a href="https://en.wikipedia.org/wiki/Learning_to_rank"><strong>“Learning to rank”</strong> problem</a> and usage of ranking-specialized evaluation measures. Worth to spot several which are widely used in industry:</p>
+<ol style="list-style-type: decimal">
+<li><a href="https://en.wikipedia.org/wiki/Precision_and_recall">Precision</a> and precision at <code>K</code> (<code>precision@k</code>). <code>precision@k</code> means that we measure precision only for top <code>K</code> elements of our ranked list.</li>
+<li><a href="https://en.wikipedia.org/wiki/Information_retrieval#Mean_average_precision">Mean average precision (MAP)</a> and Mean average precision at <code>K</code> (<code>map@k</code>). This metric takes into consideration order of items in retrieved list, but for this metrix all items are equally relevant.</li>
+<li><a href="https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Normalized_DCG">Normalized Discounted Cumulative Gain</a>(<code>ndcg</code>) and <code>ndcg@k</code>. This metrices have same sense as <code>map</code> and <code>map@k</code>, but also take into account fact that items may be not equally relevant.</li>
+<li><a href="https://en.wikipedia.org/wiki/Mean_reciprocal_rank">Mean reciprocal rank</a></li>
+</ol>
+<p>While we can’t directly optimize metrices above with W-ALS algorithm descibed in <a href="http://dsnotes.com/post/2017-05-28-matrix-factorization-for-recommender-systems/">first part</a>, we can use cross-validation to pick hyperparameters which will maximize target metric. Also need to take into account that <strong>ususally data has time dimension</strong>. In this case validation should use “future” data.</p>
+</div>
+<div id="lastfm-dataset" class="section level1">
+<h1>Lastfm dataset</h1>
+<p>Our goal for this post is to create artist recommendations using history of listenings. We will use <a href="http://ocelma.net/MusicRecommendationDataset/lastfm-360K.html">lastfm-360K</a> dataset and <a href="https://github.com/dselivanov/reco">reco package</a>. Dataset contains <code>&lt;user, artist, plays&gt;</code> tuples (for ~360,000 users) collected from Last.fm API. Archive from link above contains several files, but the only needed is <code>usersha1-artmbid-artname-plays.tsv</code>. This is implicit feedback dataset - we only observe actions from user and all feedback is positive. Possible well suited metrices are <code>ndcg@k</code>, <code>map@k</code></p>
+<pre class="r"><code>set.seed(1)
+library(data.table)
+raw_data = fread(&quot;~/Downloads/lastfm-dataset-360K/usersha1-artmbid-artname-plays.tsv&quot;, showProgress = FALSE)
+setnames(raw_data, c(&quot;user_id&quot;, &quot;artist_id&quot;, &quot;artist_name&quot;, &quot;number_plays&quot;))
+head(raw_data)</code></pre>
+<div id="preparing-data" class="section level2">
+<h2>Preparing data</h2>
+<p>In order to use WALS algorithm we need to make sparse matrix from the data: users should be in rows, artists should be in columns and values should be number of plays. Data is in unnormalized form, so let’s reshape it a little bit.</p>
+<p>First we need to create another incremental user id:</p>
+<pre class="r"><code>user_encoding = raw_data[, .(uid = .GRP), keyby = user_id]
+print(user_encoding)</code></pre>
+<p>And almost same procedure for items (item = artist in our case):</p>
+<pre class="r"><code>item_encoding = raw_data[, .(iid = .GRP, artist_name = artist_name[[1]]), keyby = artist_id]
+print(item_encoding)</code></pre>
+<p>As we can see data is little bit noisy (few strange <code>artist_id</code> and <code>user_id</code> fields), but hope it won’t hurt model too much.</p>
+<p>Now we will construct user-item interaction dataset:</p>
+<pre class="r"><code># drop artist name - already have it in item_encodings
+raw_data[, artist_name := NULL]
+# just join raw_data and user/item encodings
+dt = user_encoding[raw_data, .(artist_id, uid, number_plays), on = .(user_id = user_id)]
+dt = item_encoding[dt, .(iid, uid, number_plays), on = .(artist_id = artist_id)]
+# raw_data not needed anymore
+rm(raw_data)
+dt</code></pre>
+<p>Great, finally we got data in proper format and can focus on modeling part.</p>
+</div>
+<div id="splitting-data-into-train-and-cross-validation" class="section level2">
+<h2>Splitting data into train and cross-validation</h2>
+<p>As mentioned before usually data has time dimension. In our case however there is no such information. So we will take random set of 1000 users as test set. For these users will use 50% of listenings as given data (history of listenings) and will try to predict rest of user tastes. Defining splitting proportion is up to researcher.</p>
+<pre class="r"><code>library(Matrix)
+X = sparseMatrix(i = dt$uid, j = dt$iid, x = dt$number_plays, 
+                 dimnames = list(user_encoding$user_id, item_encoding$artist_name))
+N_CV = 1000L
+cv_uid = sample(nrow(user_encoding), N_CV)</code></pre>
+<p>And now create matrices for train and cross-validation:</p>
+<pre class="r"><code>X_train = X[-cv_uid, ]
+dim(X_train)
+X_cv = X[cv_uid, ]
+dim(X_cv)
+rm(X)</code></pre>
+<p>Last thing to do is to split CV data into history and actual validation. For each user we will take random half of listenings and will them treat as history and rest as future. This will be easier to perform using data tables:</p>
+<pre class="r"><code># convert matrix to COO format and then to data.table
+temp = as(X_cv, &quot;TsparseMatrix&quot;)
+# note that indices in &#39;TsparseMatrix&#39; are 0-based!
+temp = data.table(i = temp@i, j = temp@j, x = temp@x)
+# mark 50% as history
+temp[, history := sample(c(TRUE, FALSE), .N, replace = TRUE, prob = c(0.5, 0.5)), by = i]
+head(temp)
+X_cv_history = temp[history == TRUE]
+X_cv_future = temp[history == FALSE]
+rm(temp)
+# and convert back to sparse matrices
+# indices in &#39;TsparseMatrix&#39; are 0-based, so setting `index1 = FALSE`
+X_cv_history = sparseMatrix( i = X_cv_history$i, j = X_cv_history$j, x = X_cv_history$x, 
+                             dims = dim(X_cv), dimnames = dimnames(X_cv), index1 = FALSE)
+X_cv_future = sparseMatrix( i = X_cv_future$i, j = X_cv_future$j, x = X_cv_future$x, 
+                             dims = dim(X_cv), dimnames = dimnames(X_cv), index1 = FALSE)</code></pre>
+</div>
+<div id="validation-strategy" class="section level2">
+<h2>Validation strategy</h2>
+<p>As discussed in previous post W-ALS algorithm minimizes loss of the following form:</p>
+<p><code>$$loss = L = \sum_{ u = user} \sum_{i = item} C_{ui}(P_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$</code></p>
+<p>Where <span class="math inline">\(C_{ui}\)</span> (confidence) has form of <span class="math inline">\(C = 1 + f(R)\)</span> (<span class="math inline">\(R\)</span> is raw interactions score). And usually good choice is to simply let <span class="math inline">\(C = 1 + \alpha R\)</span>. As we can see such model will have several hyperparameters:</p>
+<ol style="list-style-type: decimal">
+<li>rank</li>
+<li><span class="math inline">\(\alpha\)</span></li>
+<li><span class="math inline">\(\lambda\)</span></li>
+</ol>
+<p>Obviously as model minimizes loss we could imply that the smaller the loss the better the model. <strong>But(!)</strong> the most interesting part is that <strong>we won’t be able to compare models with different <span class="math inline">\(\alpha\)</span> since loss depends on <span class="math inline">\(\alpha\)</span></strong>! And we can’t say that one model better than other just because it has lower loss on validation set - these losses will have different scales. However using value of the loss we can monitor convergence of each single model.</p>
+<p>For the reason above it <strong>is essentially to track target metices during cross-validation</strong>.</p>
+</div>
+<div id="w-als-with-reco-package" class="section level2">
+<h2>W-ALS with <code>reco</code> package</h2>
+<p>We will use <a href="https://github.com/dselivanov/reco">reco</a> which was announced in the last post. It allows to easlily track <code>map@k</code> and <code>ndcg@k</code>. Let’s see it in action.</p>
+<p>First of all we will create model of rank 8:</p>
+<pre class="r"><code>library(reco)
+model = ALS$new(rank = 8)</code></pre>
+<p><code>model</code> class has several methods (see <code>?ALS</code> for full documentation). Here we will use following:</p>
+<ol style="list-style-type: decimal">
+<li><code>fit_transform(x, n_iter, n_threads, ...)</code> - performs matrix factorization. It expects values in input sparse matrix <code>x</code> for observed interactions to be a confidence scores and zeros for not-observed. So raw iteractions sparse matrix will remain sparse.</li>
+<li><code>add_scorer(x, y, name, metric, ...)</code> - keep tracking of metrices after each training epoch.</li>
+</ol>
+<div id="confidence" class="section level3">
+<h3>Confidence</h3>
+<p>Now we will create cofidence matrices for train and cross-validation:</p>
+<pre class="r"><code>make_confidence = function(x, alpha) {
+  x_confidence = x
+  stopifnot(inherits(x, &quot;sparseMatrix&quot;))
+  x_confidence@x = 1 + alpha * x@x
+  x_confidence
+}</code></pre>
+<p>Creating matrices:</p>
+<pre class="r"><code>alpha = 0.1
+X_train_conf = make_confidence(X_train, alpha)
+X_cv_history_conf = make_confidence(X_cv_history, alpha)</code></pre>
+<p>It make sense to try different values of alpha - we will try it later.</p>
+<p>Note that we don’t want to touch <code>X_cv_future</code> since we will use raw listening counts as relevance scores in <code>ndcg</code> calculation. If we will transform them we won’t be able to compare <code>ndcg</code> of the models wich use different confidence transformations because <code>ndcg</code> values will depend on <span class="math inline">\(\alpha\)</span>.</p>
+<p>Adding scoring metrices to model - <code>ndcg@10</code> and <code>map@10</code>:</p>
+<pre class="r"><code>model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = &quot;ndcg-10&quot;, metric = &quot;ndcg@10&quot;)
+model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = &quot;map-10&quot;, metric = &quot;map@10&quot;)</code></pre>
+</div>
+<div id="training" class="section level3">
+<h3>Training</h3>
+<p>When using <code>reco</code> with optimized multithreaded BLAS such as Apple VecLib, OpenBLAS, Intel MKL it is <strong>very important to disable BLAS parallelism</strong> since <code>reco</code> itself already uses multiple threads at higher level. Due to thread contention and nesting such programs <strong>can be slower then single thread program by a factor of 1000 and more!</strong> In order to set number of BLAS threads to one I will use <code>RhpcBLASctl</code> package.</p>
+<pre class="r"><code>RhpcBLASctl::blas_set_num_threads(1)
+user_embeddings = model$fit_transform(X_train_conf, n_iter = 10L, n_threads = 8)</code></pre>
+<p>Check trace of the training:</p>
+<pre class="r"><code>library(ggplot2)
+trace = attr(user_embeddings, &quot;trace&quot;)
+g = ggplot(trace) +  geom_line(aes(x = iter, y = value, col = scorer))
+plotly::ggplotly(g, width = 9, height = NULL)</code></pre>
+<p>As we can see algorithm quickly converges (only about 5 iterations) and loss convergence is highly correlated to <code>ndcg</code> and <code>map</code> convergence. More interesting it seems algorithm is quite resistant to overfitting.</p>
+<p>Let’s create grid search in order to find optimal hyperparameters of <span class="math inline">\(\alpha\)</span> and rank. Usually models with higher rank work better. But also the larger the rank the stronger should be regularization <span class="math inline">\(\lambda\)</span>. Here we omitting tuning of <span class="math inline">\(\lambda\)</span> for simplicity.</p>
+<pre class="r"><code>futile.logger::flog.threshold(futile.logger::ERROR)
+
+RhpcBLASctl::blas_set_num_threads(1)
+
+trace = NULL
+alpha = c(0.01, 1)
+rank = c(16, 8)
+n_iter_max = 10L
+n_threads = 8L
+grid = expand.grid(alpha = alpha, rank = rank)
+convergence_tol = 0.01
+for(k in seq_len(nrow(grid))) {
+  alpha = grid$alpha[[k]]
+  rank = grid$rank[[k]]
+  
+  # futile.logger::flog.info(&quot;alpha = %.3f, rank = %d&quot;, alpha, rank)
+  model = ALS$new(rank = rank)
+
+  X_train_conf = make_confidence(X_train, alpha)
+  X_cv_history_conf = make_confidence(X_cv_history, alpha)
+  
+  model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = &quot;ndcg-10&quot;, metric = &quot;ndcg@10&quot;)
+  model$add_scorer(x = X_cv_history_conf, y = X_cv_future, name = &quot;map-10&quot;, metric = &quot;map@10&quot;)
+  
+  # fit model
+  user_embeddings = model$fit_transform(X_train_conf, n_iter = n_iter_max, 
+                                        convergence_tol = convergence_tol, n_threads = n_threads)
+  # store strace
+  grid_trace = attr(user_embeddings, &quot;trace&quot;)
+  
+  grid_trace$param_set = sprintf(&quot;alpha=%.3f; rank=%d&quot;, alpha, rank)
+  trace = c(trace, list(grid_trace))
+}
+trace = rbindlist(trace)</code></pre>
+<p>Plotting traces:</p>
+<pre class="r"><code>g = ggplot(trace) + 
+  geom_line(aes(x = iter, y = value, col = param_set)) +
+  facet_wrap( ~ scorer, scales = &quot;free&quot;) +
+  theme(legend.position=&quot;bottom&quot;)
+plotly::ggplotly(g, width = 9, height = NULL)</code></pre>
+<p>Calculation of <code>map</code> and <code>ndcg</code> for each iteration is not always necessary because as we’ve seen above it is highly correlated with loss. Also it takes quite long time to compute such metrices. So usually it worth just to check them after loss converges. This is easy with <code>$ndcg_k()</code> and <code>$ap_k()</code> methods:</p>
+<pre class="r"><code>ndcg_k = model$ndcg_k(x = X_cv_history_conf, y = X_cv_future, k = 10)
+mean_ndcg_k = mean(ndcg_k)
+ap_k = model$ap_k(x = X_cv_history_conf, y = X_cv_future, k = 10)
+mean_ap_k = mean(ap_k)</code></pre>
+</div>
+</div>
+<div id="generating-low-latency-recommendations" class="section level2">
+<h2>Generating low-latency recommendations</h2>
+<p>How recommendations are generated? This is simple: for a given user <span class="math inline">\(j\)</span> with latent vector <span class="math inline">\(U_j\)</span> and all items with matrix of latent factors <span class="math inline">\(I\)</span> we compute dot product: <span class="math inline">\(score = U_j I\)</span>. <span class="math inline">\(score_i\)</span> is our confidence that user <span class="math inline">\(U_j\)</span> will be interested in item <span class="math inline">\(I_i\)</span>. Now we can take top N items, possibly apply some business logic on top (for example filter out already listened artists). Then deliver recommendation to user. So far so good. <strong>But what can we show to new users? We don’t have latent factors for them!</strong></p>
+<div id="recommendations-for-new-users" class="section level3">
+<h3>Recommendations for new users</h3>
+<p>This question is not particularly well explained in articles or blog posts I found. Moreover it looks like big source of confusion - a lot of questions at StackOverflow: <a href="https://stackoverflow.com/questions/41537470/als-model-how-to-generate-full-u-vt-v">1</a>, <a href="https://stackoverflow.com/questions/41568974/als-model-predicted-full-u-vt-v-ratings-are-very-high">2</a>, <a href="https://stackoverflow.com/questions/29160046/spark-mllib-collaborative-filtering-with-new-user">3</a>, <a href="https://stackoverflow.com/questions/36723429/how-can-i-handle-new-users-items-in-model-generated-by-spark-als-from-mllib">4</a>, <a href="https://datascience.stackexchange.com/questions/14744/spark-als-recommending-for-new-users">5</a>.</p>
+<p>One obvious solution will be to add new users interactions and run matrix factoriation again. However such method won’t work for real world problems - full factorization is very expensive operation and we need recommendations in near real-time.</p>
+<p>But we can make very good approximation of the idea above. Remember that after convergence we got 2 matrices <span class="math inline">\(U\)</span> and <span class="math inline">\(I\)</span> - users and items embeddings. They are calculated from large amount of user-item interactions and each of them unlikely will change too much after addition of couple of users or items.</p>
+<p>Reminder - our goal is to create recommendations for user which was not in our training data. In order to do this we need to:</p>
+<ol style="list-style-type: decimal">
+<li>Take embeddings <span class="math inline">\(I\)</span> from full matrix factorization</li>
+<li>Somehow obtain user embeddings <span class="math inline">\(U_j\)</span></li>
+<li>Calculate <span class="math inline">\(score = U_j I\)</span> and sort items according to scores values</li>
+</ol>
+<p>So the task will be following: given a new user interactions and <strong>precalculated fixed item embeddings</strong> (from full matrix factorization) we need to obtain user embeddings. How to do that? Little linear algebra will help - we need just to <strong>run single iteration of our ALS algorithm</strong>. This is exactly how we minimized cost during full matrix factorization - alternated between fixing user factors and solving for item factors and fixing item factors and solving for user factors. So given item factor we can calculate new users factors.</p>
+<p>And this is how <a href="https://github.com/dselivanov/reco">reco’s</a> <code>transform</code> method works. <code>predict</code> method takes user embeddings from <code>transform</code> method, multiplies with item embeddings and takes top of them. This is exactly how we made recommendations for our cross-validation.</p>
+<p>Lets go through example:</p>
+<p>Obtain new user embeddings:</p>
+<pre class="r"><code>model = ALS$new(rank = 16)
+set.seed(1)
+alpha = 0.01
+X_train_conf = make_confidence(X_train, alpha)
+X_cv_history_conf = make_confidence(X_cv_history, alpha)
+user_embeddings = model$fit_transform(X_train_conf, n_iter = 10L, n_threads = 8)
+new_user_embeddings = model$transform(X_cv_history_conf)</code></pre>
+<p>And let’s check how to make predictions for a single user and how much time it will take:</p>
+<pre class="r"><code>library(microbenchmark)
+new_user_1 = X_cv_history_conf[1:1, , drop = FALSE]
+microbenchmark({new_user_predictions = model$predict(new_user_1, k = 10)}, times = 10)</code></pre>
+<p>As we can see it is single digit millisecond, so we can serve them real-time. <strong>In the next post I will describe how to build scalable high-performance RESTful service for serving recommendations in real-time.</strong></p>
+</div>
+<div id="similar-items" class="section level3">
+<h3>Similar items</h3>
+<p>Another very useful type of recommendations is item-to-item recommendations. A good example is Amazon which show similar items on a product page. And interestingly we can create such recommendations by using item embeddings and calculationg cosine distance between them:</p>
+<pre class="r"><code># transpose for convenience of cosine distance calculation
+artist_emb = t(model$components)
+artist_query = artist_emb[&quot;the beatles&quot;, , drop = FALSE]
+artist_query_sim = text2vec::sim2(artist_query, artist_emb, method = &quot;cosine&quot;)
+# flatten 1-row matrix
+artist_query_sim = artist_query_sim[1, ]
+# check similar artists
+sort(artist_query_sim, decreasing = T)[1:10]</code></pre>
+<p>I can’t say why “Bob Dylan” or “The Rolling Stones” are ahead of “John Lennon”. Keep in mind that we didn’t solve optimization task for item “similarity” (and notion of similarity itself is ambigious). But they look reasonalbe and we got them complimentary to our user-item recommendations.</p>
+<p>Here is another example for “The Offspring”:</p>
+<pre class="r"><code># transpose for convenience of cosine distance calculation
+artist_emb = t(model$components)
+artist_query = artist_emb[&quot;the offspring&quot;, , drop = FALSE]
+artist_query_sim = text2vec::sim2(artist_query, artist_emb, method = &quot;cosine&quot;)
+# flatten 1-row matrix
+artist_query_sim = artist_query_sim[1, ]
+# check similar artists
+sort(artist_query_sim, decreasing = T)[1:10]</code></pre>
+</div>
+</div>
+<div id="conclusions" class="section level2">
+<h2>Conclusions</h2>
+<p>Summarizing:</p>
+<ol style="list-style-type: decimal">
+<li>I’ve descibed tips on how to make offline evaluation and cross-validation of recommender systems;</li>
+<li>We’ve seen how to perform cross-validation and hyperparameter search with <a href="https://github.com/dselivanov/reco">reco</a> package;</li>
+<li>Learned how to make low-latency recommendations for new users;</li>
+<li>Explored how to use item embeddings in order to construct item-to-item recommendations.</li>
+</ol>
+<p>I remember that in last post I promised to provide some benchmarks of <code>reco</code> against other libraries. Current post is too long for this, so I will compare <a href="https://github.com/dselivanov/reco">reco</a> with other tools in next post. Hopefully they will be:</p>
+<ul>
+<li>Python’s <a href="https://github.com/benfred/implicit">implicit</a> module</li>
+<li>Quora’s <a href="https://github.com/benfred/implicit">qmf</a> C++ library</li>
+<li>Spark’s implementation of <a href="http://spark.apache.org/docs/latest/ml-collaborative-filtering.html">ALS</a>.</li>
+</ul>
+<p>Additionally I hope we will explore some options for deployment of R models as scalable and high-performance RESTful microservices.</p>
+<p>Let me know what do you think in the comments.</p>
+</div>
+</div>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/" title="Matrix factorization for recommender systems">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/2017-07-10-bench-wrmf/" title="Benchmarking different implementations of weighted-ALS matrix factorization">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-07-10-bench-wrmf/">Benchmarking different implementations of weighted-ALS matrix factorization</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/">Matrix factorization for recommender systems (part 2)</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/">Matrix factorization for recommender systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/r">r</a></li><li><a href="/tags/recommender-systems">recommender-systems</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        for(var all in MathJax.Hub.getAllJax()) {
+            all.SourceElement().parentNode.className += ' has-jax';
+
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Setup on Data Science notes</title>
+    <link>/tags/setup/</link>
+    <description>Recent content in Setup on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Thu, 16 Jul 2015 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/setup/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Working with MS SQL server on non-windows systems</title>
+      <link>/post/r-and-mssql/</link>
+      <pubDate>Thu, 16 Jul 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/r-and-mssql/</guid>
+      <description>As I know, there are few choices to connect from R to MS SQL Server:
+ RODBC RJDBC rsqlserver  But only second option can be used on mac and linux machines. Here is nice stackoverflow thread.
+Most of the people suggest to use microsoft sql java driver. But there is a case when this will not help - windows domain authentification. In this situation I found the only working solution is to use nice jTDS.</description>
+    </item>
+    
+    <item>
+      <title>Installing cuda toolkit and related R packages</title>
+      <link>/post/installing-cuda-toolkit-and-gputools/</link>
+      <pubDate>Thu, 04 Jun 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/installing-cuda-toolkit-and-gputools/</guid>
+      <description>The main purpose of this post is to keep all steps of installing cuda toolkit (and R related packages) and in one place. Also I hope this may be useful for someone.
+Installing cuda toolkit ( Ubuntu ) First of all we need to install nvidia cuda toolkti. I&amp;rsquo;am on latest ubuntu 15.04, but found this article well suited for me. But there are few additions:
+ It is very important to have no nvidia drivers before installation ( first I corrupted my system and have to reinstall it :-( ).</description>
+    </item>
+    
+  </channel>
+</rss>

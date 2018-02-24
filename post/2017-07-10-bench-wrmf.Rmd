@@ -1,0 +1,64 @@
+---
+title: Benchmarking different implementations of weighted-ALS matrix factorization
+author: Dmitriy Selivanov
+date: '2017-07-10'
+slug: 2017-07-10-bench-wrmf
+tags:
+  - R
+  - recommender-systems
+description: benchmarks of reco, spark, qmf, implicit for weighted-ALS matrix factorization
+draft: false
+keywords:
+  - recommender system
+  - implicit feedback
+type: post
+mathjax: true
+---
+  ```{r global_options, include=FALSE}
+library(knitr)
+library(methods)
+opts_chunk$set(cache=FALSE, eval = TRUE)
+```
+**updated 01/08/2017** - added CG solver in [reco](https://github.com/dselivanov/reco), adjusted results
+
+As I promised in [last post](http://dsnotes.com/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/), I'm going to share benchmark of different implementation of matrix factorization with Weighted Alternating Least Squares. User-Item interaction matrix is made from [lastfm-360K](http://ocelma.net/MusicRecommendationDataset/lastfm-360K.html) dataset. Implementations incude:
+
+1. My [reco](https://github.com/dselivanov/reco) R package
+1. Ben Frederickson [implicit](https://github.com/benfred/implicit) python module
+1. Apache Spark [implementation](https://spark.apache.org/docs/latest/ml-collaborative-filtering.html)
+1. Quora's [qmf solver](https://github.com/quora/qmf)
+
+For the transparency I've created [repository with all the code](https://github.com/dselivanov/bench-wals). If you will find any flaws plese write me a message. 
+
+### Benchmark set-up
+
+1. Hardware - Intel Xeon X3470, 4 physical cores, 8 threads (Nehalem architecture). All implementations used 8 threads since I found this adds some performance compared to 4 cores.
+1. OpenBLAS. All implementations use high-level parallelism, so in order to avoid thread contention I've limited BLAS threads to 1: `export OPENBLAS_NUM_THREADS=1`
+1. In order to compare apples-to-apples all C-family imlpementations (`qmf`, `rect`, `implicit`) were compiled with following flags: `-O3 -ffast-math -march=native -msse4.2`
+1. Spark was compiled with native BLAS support as [described in instruction](https://spark.apache.org/docs/latest/ml-guide.html#dependencies)
+1. I didn't compare accuracy of implementations. I'm pretty sure about `reco`, `implicit` and `qmf`, but I'm quite sceptical about Spark. From my experience almost all algorithms from Spark's MlLib are far from perfect (mildly speaking)
+1. Each implementation run for 3 iterations
+
+### Results
+
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(plotly)
+df = read.csv("https://raw.githubusercontent.com/dselivanov/bench-wals/master/results.csv")
+g = ggplot(df) + 
+  geom_line(aes(x = rank, y = time, col = solver)) + 
+  geom_point(aes(x = rank, y = time, col = solver))
+ggplotly(g, width = 9)
+```
+
+
+## Surprise
+
+Biggest surprise is that Spark's implementation was comparable to others! On `rank = 128` it even outperforms `qmf`. I don't know exact reason, but may be `qmf` doesn't use native BLAS. Also it would be worth to check ranking accuracy of Spark's results.
+
+## Conclusions
+
+1. Ben's [solver based on Conjugate Gradient](http://www.benfrederickson.com/fast-implicit-matrix-factorization/) is the fastest. [reco](https://github.com/dselivanov/reco)'s Conjugate Gradient only a little bit slower (20% on rank 128).
+1. [reco](https://github.com/dselivanov/reco) is fastest among Cholesky solvers. ~~Would be interesting to implement CG solver as well.~~ - [done](https://github.com/dselivanov/reco/commit/7a8742602c2bfc1d55b7aaf84db1807962f74d69).
+1. At small ranks Spark is several times slower than other packages. But with larger values of rank it cathes. Seems for small ranks overhead of calling native routines is substantial.
+

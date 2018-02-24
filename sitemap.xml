@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>/post/2017-07-10-bench-wrmf/</loc>
+    <lastmod>2017-07-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/</loc>
+    <lastmod>2017-06-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2017-05-28-matrix-factorization-for-recommender-systems/</loc>
+    <lastmod>2017-05-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/</loc>
+    <lastmod>2017-02-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/about/</loc>
+    <lastmod>2017-01-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/projects/</loc>
+    <lastmod>2017-01-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/text2vec-0-4/</loc>
+    <lastmod>2016-10-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/text2vec-0-3/</loc>
+    <lastmod>2016-03-17T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/r-read-hdfs/</loc>
+    <lastmod>2016-02-20T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/fast-parallel-async-adagrad/</loc>
+    <lastmod>2016-01-09T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/glove-enwiki/</loc>
+    <lastmod>2015-12-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/text2vec/</loc>
+    <lastmod>2015-11-09T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/r-and-mssql/</loc>
+    <lastmod>2015-07-16T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/installing-cuda-toolkit-and-gputools/</loc>
+    <lastmod>2015-06-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/locality-sensitive-hashing-in-r-part-1/</loc>
+    <lastmod>2015-01-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/rmongodb-1.8.0/</loc>
+    <lastmod>2014-11-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>/post/2017-06-21-matrix-factorization-for-recommender-systems-part-2/</loc>
+  </url>
+  
+  <url>
+    <loc>/tags/big_data/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/</loc>
+    <lastmod>2017-07-10T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/data_table/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/glove/</loc>
+    <lastmod>2016-01-09T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/gpgpu/</loc>
+    <lastmod>2015-06-04T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/hashing_trick/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/kaggle/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/lsh/</loc>
+    <lastmod>2015-01-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/mongodb/</loc>
+    <lastmod>2014-11-02T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/online_learning/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/post/</loc>
+    <lastmod>2017-07-10T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/r/</loc>
+    <lastmod>2017-07-10T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/rcpp/</loc>
+    <lastmod>2016-01-09T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/rcppparallel/</loc>
+    <lastmod>2016-01-09T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/recommender-systems/</loc>
+    <lastmod>2017-07-10T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/setup/</loc>
+    <lastmod>2015-07-16T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/spark/</loc>
+    <lastmod>2016-02-20T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/sparkr/</loc>
+    <lastmod>2016-02-20T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/</loc>
+    <lastmod>2017-02-14T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/text2vec/</loc>
+    <lastmod>2016-10-07T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/topics/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>/tags/word2vec/</loc>
+    <lastmod>2015-12-01T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+</urlset>

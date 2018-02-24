@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Data Science notes</title>
+    <link>/</link>
+    <description>Recent content on Data Science notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</managingEditor>
+    <webMaster>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</webMaster>
+    <lastBuildDate>Mon, 10 Jul 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Benchmarking different implementations of weighted-ALS matrix factorization</title>
+      <link>/post/2017-07-10-bench-wrmf/</link>
+      <pubDate>Mon, 10 Jul 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-07-10-bench-wrmf/</guid>
+      <description>updated 01/08/2017 - added CG solver in reco, adjusted results
+As I promised in last post, I’m going to share benchmark of different implementation of matrix factorization with Weighted Alternating Least Squares. User-Item interaction matrix is made from lastfm-360K dataset. Implementations incude:
+My reco R package Ben Frederickson implicit python module Apache Spark implementation Quora’s qmf solver  For the transparency I’ve created repository with all the code.</description>
+    </item>
+    
+    <item>
+      <title>Matrix factorization for recommender systems (part 2)</title>
+      <link>/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/</link>
+      <pubDate>Wed, 28 Jun 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/</guid>
+      <description>In previous post I explained Weigted Alternating Least Squares algorithm for matrix factorization. This post will be more practical - we will build a model which will recommend artists recommendations based on history of track listenings.
+Design of evaluation and cross validation Before we will go to modeling we need to discuss how we will validate our model. At the very beginning I would like to highlight that final validation should be done online through A/B testing (or more advanced “bandit” approach).</description>
+    </item>
+    
+    <item>
+      <title>Matrix factorization for recommender systems</title>
+      <link>/post/2017-05-28-matrix-factorization-for-recommender-systems/</link>
+      <pubDate>Sun, 28 May 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-05-28-matrix-factorization-for-recommender-systems/</guid>
+      <description>Generally speaking the task for a recommender system is not to make up-sale. The real task is to keep customers engaged in your service. With loyal customers, you can monetize your service.
+Recommender systems is a very wide area, but in this post I won’t go into basics. Instead, I will explain collaborative filtering and more precisely - de-facto industry standard - matrix factorization.
+User-Item interactions The idea of collaborative filtering is that given collected behavior of many customers you can find some patterns and predict their future actions using history of actions of similar customers.</description>
+    </item>
+    
+    <item>
+      <title>Fitting logistic regression on 100gb dataset on a laptop</title>
+      <link>/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/</link>
+      <pubDate>Tue, 14 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/</guid>
+      <description>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - https://github.com/dselivanov/kaggle-outbrain.
+This is continue of Lessons learned from “Outbrain Click Prediction” kaggle competition (part 1). As a quick recap - we achieved MAP@12 ~ 0.67 which is equal to ~90-100 position on leaderboard. And we didn’t use information about page views from 100gb (30gb compressed) page_views.csv.zip file.
+Splitting As it is impossible to read zip file with R line by line (at least I don’t know solution) we will split file into many “mini-batches” in a way that each such batch can be efficiently read from disk into RAM.</description>
+    </item>
+    
+    <item>
+      <title>Large data, feature hashing and online learning</title>
+      <link>/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/</link>
+      <pubDate>Sat, 04 Feb 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/</guid>
+      <description>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - https://github.com/dselivanov/kaggle-outbrain.
+Recently I participated in Outbrain Click Prediction kaggle competition (and no, I won’t talk about crazy xgboost stacking and blending :-) ). Competition was interesting for me mainly because of 2 things:
+Organizers provided a lot of data - around 100gb. I like to solve problems efficiently, so initial main challenge for was to try to solve this on my laptop.</description>
+    </item>
+    
+    <item>
+      <title>Dmitriy Selivanov</title>
+      <link>/about/</link>
+      <pubDate>Thu, 26 Jan 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/about/</guid>
+      <description>Data Science Notes by Dmitriy Selivanov
+ Github Stackoverflow Kaggle LinkedIn  </description>
+    </item>
+    
+    <item>
+      <title>Dmitriy Selivanov</title>
+      <link>/projects/</link>
+      <pubDate>Thu, 26 Jan 2017 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/projects/</guid>
+      <description>My projects which worth to check:
+ text2vec - comprehensive framework for text mining in R. Fast and memory efficient. LSHR - locality sensitive hashing for approximate near-neighbour search FTRL - blazing fast online logistic regression (with L1, L2, dropout regularization)  </description>
+    </item>
+    
+    <item>
+      <title>text2vec 0.4</title>
+      <link>/post/text2vec-0-4/</link>
+      <pubDate>Fri, 07 Oct 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec-0-4/</guid>
+      <description>Introducing text2vec 0.4 Today I&amp;rsquo;m pleased to announce new major release of text2vec - text2vec 0.4 which is already on CRAN.
+For those readers who is not familiar with text2vec - it is an R package which provides an efficient framework with a concise API for text analysis and natural language processing.
+With this release I also launched project homepage - http://text2vec.org where you can find up-to-date documents and tutorials.</description>
+    </item>
+    
+    <item>
+      <title>text2vec 0.3</title>
+      <link>/post/text2vec-0-3/</link>
+      <pubDate>Thu, 17 Mar 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec-0-3/</guid>
+      <description>updated 2016-03-31 - few functions renamed
+updated 2016-10-07 - see updated tutorial for text2vec 0.4
+Today I&amp;rsquo;m pleased to announce preview of the new version of text2vec. It is located in the 0.3 development branch, but very soon (probably in about a week) it will be merged into master.
+To reproduce examples below, please install text2vec@0.3 from github:
+devtools::install_github(&#39;dselivanov/text2vec@0.3&#39;)  Also I&amp;rsquo;m waiting for feedback from text2vec users, please spend a few minutes:</description>
+    </item>
+    
+    <item>
+      <title>Read from hdfs with R. Brief overview of SparkR.</title>
+      <link>/post/r-read-hdfs/</link>
+      <pubDate>Sat, 20 Feb 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/r-read-hdfs/</guid>
+      <description>Disclaimer: originally I planned to write post about R functions/packages which allow to read data from hdfs (with benchmarks), but in the end it became more like an overview of SparkR capabilities.
+Nowadays working with &amp;ldquo;big data&amp;rdquo; almost always means working with hadoop ecosystem. A few years ago this also meant that you also would have to be a good java programmer to work in such environment - even simple word count program took several dozens of lines of code.</description>
+    </item>
+    
+    <item>
+      <title>text2vec GloVe implementation details</title>
+      <link>/post/fast-parallel-async-adagrad/</link>
+      <pubDate>Sat, 09 Jan 2016 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/fast-parallel-async-adagrad/</guid>
+      <description>Before reading this post, I very recommend to read:
+ Orignal GloVe paper Jon Gauthier&amp;rsquo;s post, which provides detailed explanation of python implementation. This post helps me a lot with C++ implementation.  Word embeddings After Tomas Mikolov et al. released word2vec tool, there was a boom of articles about words vector representations. One of the greatest is GloVe, which did a big thing by explaining how such algorithms work.</description>
+    </item>
+    
+    <item>
+      <title>GloVe vs word2vec revisited.</title>
+      <link>/post/glove-enwiki/</link>
+      <pubDate>Tue, 01 Dec 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/glove-enwiki/</guid>
+      <description>Today I will start to publish series of posts about experiments on english wikipedia. As I said before, text2vec is inspired by gensim - well designed and quite efficient python library for topic modeling and related NLP tasks. Also I found very useful Radim&amp;rsquo;s posts, where he tried to evaluate some algorithms on english wikipedia dump. This dataset is rather big. For example, dump for 2015-10 (which will be used below) is 12gb bzip2 compressed file.</description>
+    </item>
+    
+    <item>
+      <title>Analyzing texts with text2vec package</title>
+      <link>/post/text2vec/</link>
+      <pubDate>Mon, 09 Nov 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/text2vec/</guid>
+      <description>updated 2016-10-07 - see post with updated tutorial for text2vec 0.4
+In the last weeks I have actively worked on text2vec (formerly tmlite) - R package, which provides tools for fast text vectorization and state-of-the art word embeddings.
+This project is an experiment for me - what can a single person do in a particular area? After these hard weeks, I believe, he can do a lot.
+There are a lot of changes from my previous introduction post, and I want to highlight few of them:</description>
+    </item>
+    
+    <item>
+      <title>Working with MS SQL server on non-windows systems</title>
+      <link>/post/r-and-mssql/</link>
+      <pubDate>Thu, 16 Jul 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/r-and-mssql/</guid>
+      <description>As I know, there are few choices to connect from R to MS SQL Server:
+ RODBC RJDBC rsqlserver  But only second option can be used on mac and linux machines. Here is nice stackoverflow thread.
+Most of the people suggest to use microsoft sql java driver. But there is a case when this will not help - windows domain authentification. In this situation I found the only working solution is to use nice jTDS.</description>
+    </item>
+    
+    <item>
+      <title>Installing cuda toolkit and related R packages</title>
+      <link>/post/installing-cuda-toolkit-and-gputools/</link>
+      <pubDate>Thu, 04 Jun 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/installing-cuda-toolkit-and-gputools/</guid>
+      <description>The main purpose of this post is to keep all steps of installing cuda toolkit (and R related packages) and in one place. Also I hope this may be useful for someone.
+Installing cuda toolkit ( Ubuntu ) First of all we need to install nvidia cuda toolkti. I&amp;rsquo;am on latest ubuntu 15.04, but found this article well suited for me. But there are few additions:
+ It is very important to have no nvidia drivers before installation ( first I corrupted my system and have to reinstall it :-( ).</description>
+    </item>
+    
+    <item>
+      <title>Locality Sensitive Hashing in R</title>
+      <link>/post/locality-sensitive-hashing-in-r-part-1/</link>
+      <pubDate>Fri, 02 Jan 2015 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/locality-sensitive-hashing-in-r-part-1/</guid>
+      <description>Introduction In the next series of posts I will try to explain base concepts Locality Sensitive Hashing technique.
+Note, that I will try to follow general functional programming style. So I will use R&amp;rsquo;s Higher-Order Functions instead of traditional R&amp;rsquo;s *apply functions family (I suppose this post will be more readable for non R users). Also I will use brilliant pipe operator %&amp;gt;% from magrittr package. We will start with basic concepts, but end with very efficient implementation in R (it is about 100 times faster than python implementations I found).</description>
+    </item>
+    
+    <item>
+      <title>rmongodb 1.8.0</title>
+      <link>/post/rmongodb-1.8.0/</link>
+      <pubDate>Sun, 02 Nov 2014 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/rmongodb-1.8.0/</guid>
+      <description>Today I’m introducing new version of rmongodb (which I started to maintain) – v1.8.0. Install it from github:
+library(devtools) install_github(&amp;quot;mongosoup/rmongodb@v1.8.0&amp;quot;)  Release version will be uploaded to CRAN shortly. This release brings a lot of improvements to rmongodb:
+ Now rmongodb correctly handles arrays.  mongo.bson.to.list() rewritten from scratch. R’s unnamed lists are treated as arrays, named lists as objects. Also it has an option – whether to try to simplify vanilla lists to arrays or not.</description>
+    </item>
+    
+    <item>
+      <title></title>
+      <link>/post/2017-06-21-matrix-factorization-for-recommender-systems-part-2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <author>selivanov.dmitriy@gmail.com (Dmitriy Selivanov)</author>
+      <guid>/post/2017-06-21-matrix-factorization-for-recommender-systems-part-2/</guid>
+      <description>Matrix factorization for recommender systems (part 2)            code{white-space: pre;} pre:not([class]) { background-color: white; }  if (window.hljs &amp;&amp; document.readyState &amp;&amp; document.readyState === &#34;complete&#34;) { window.setTimeout(function() { hljs.initHighlighting(); }, 0); }  h1 { font-size: 34px; } h1.title { font-size: 38px; } h2 { font-size: 30px; } h3 { font-size: 24px; } h4 { font-size: 18px; } h5 { font-size: 16px; } h6 { font-size: 12px; } .</description>
+    </item>
+    
+  </channel>
+</rss>

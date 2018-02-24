@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Matrix factorization for recommender systems  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="Introducing Weigted Alternating Least Squares for implicit feedback datasets (and how to built it from scratch in plain R)." />
+
+<meta name="keywords" content="recommender system, implicit feedback, ">
+
+
+<meta property="og:title" content="Matrix factorization for recommender systems  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/2017-05-28-matrix-factorization-for-recommender-systems/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content="Introducing Weigted Alternating Least Squares for implicit feedback datasets (and how to built it from scratch in plain R)."/>
+<meta property="og:article:published_time" content="2017-05-28T00:00:00Z" />
+<meta property="og:article:modified_time" content="2017-05-28T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="recommender system">
+    
+<meta property="og:article:tag" content="implicit feedback">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Matrix factorization for recommender systems" />
+<meta name="twitter:description" content="Introducing Weigted Alternating Least Squares for implicit feedback datasets (and how to built it from scratch in plain R)." />
+<meta name="twitter:url" content="/post/2017-05-28-matrix-factorization-for-recommender-systems/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Matrix factorization for recommender systems",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2017-05-28",
+    "description": "Introducing Weigted Alternating Least Squares for implicit feedback datasets (and how to built it from scratch in plain R).",
+    "wordCount": 1879
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/2017-05-28-matrix-factorization-for-recommender-systems/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.21" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Matrix factorization for recommender systems
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2017-05-28">28 May, 2017</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 9 min
+  &middot; (1879 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/r" class="label label-primary">R</a>
+  
+  <a href="/tags/recommender-systems" class="label label-primary">recommender-systems</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  <p>Generally speaking the task for a recommender system is not to make up-sale. The real task is to keep customers engaged in your service. With loyal customers, you can monetize your service.</p>
+<p>Recommender systems is a very wide area, but in this post I won’t go into basics. Instead, I will explain <strong>collaborative filtering</strong> and more precisely - de-facto industry standard - <strong>matrix factorization</strong>.</p>
+<div id="user-item-interactions" class="section level2">
+<h2>User-Item interactions</h2>
+<p>The idea of collaborative filtering is that given collected behavior of many customers you can find some patterns and predict their future actions using history of actions of similar customers. It worth to highlight that actions can be:</p>
+<ol style="list-style-type: decimal">
+<li><strong>explicit</strong> - user explicitly expressed his impression of an item. Probably the most common example of explicit feedback is when user assigns a rating to the item (think user is asked to rate movie).</li>
+<li><strong>implicit</strong> - user just viewed/consumed some items. A good example is when a customer browses some online shop - we can track which items he viewed, added to cart, etc. In this case, some events should have more weight than others - obviously “add to cart” gives a much stronger signal of user preference than just a page view.</li>
+</ol>
+<p>But in both cases we can store user-item interactions as <strong>sparse matrix</strong> where by convention users are in rows and items are in columns and interaction scores are values:</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="center">item_1</th>
+<th align="center">item_2</th>
+<th align="center">…</th>
+<th align="center">item_n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>user_1</td>
+<td align="center">_</td>
+<td align="center">_</td>
+<td align="center">1</td>
+<td align="center">_</td>
+</tr>
+<tr class="even">
+<td>user_2</td>
+<td align="center">1</td>
+<td align="center">_</td>
+<td align="center">_</td>
+<td align="center">5</td>
+</tr>
+<tr class="odd">
+<td>…</td>
+<td align="center">_</td>
+<td align="center">5</td>
+<td align="center">3</td>
+<td align="center">_</td>
+</tr>
+<tr class="even">
+<td>user_n</td>
+<td align="center">3</td>
+<td align="center">_</td>
+<td align="center">_</td>
+<td align="center">1</td>
+</tr>
+</tbody>
+</table>
+<p>Worth to note, that <strong>missing values in sparse matrix are not zeros</strong> - they are latent unobserved values!</p>
+</div>
+<div id="decomposition-of-user-item-interaction-matrix" class="section level2">
+<h2>Decomposition of user-item interaction matrix</h2>
+<p>The high-level idea behind matrix factorization is quite simple. Having user-item interaction matrix we can decompose it into two lower rank matrices <span class="math inline">\(U\)</span> and <span class="math inline">\(I\)</span>. And we will decompose it in a way that dot product of user-factors vector and item-factors vector should recover number which represents user-item interaction in original interaction matrix.</p>
+<div id="explicit-feedback" class="section level3">
+<h3>Explicit feedback</h3>
+<p>A simple model for explicit feedback (which is well studied (thanks to <a href="https://en.wikipedia.org/wiki/Netflix_Prize">netflix prize competition</a> )) can look like:</p>
+<p><code>$$loss = L = \sum_{ u = user} \sum_{i = item} (R_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$</code> where <span class="math inline">\(R\)</span> - observed ratings, <span class="math inline">\(X\)</span> - user embeddings, <span class="math inline">\(Y\)</span> - item embeddings, <span class="math inline">\(\lambda\)</span> is regularization parameter.</p>
+<p>A little bit more complex model could include general bias and biases for user and item:</p>
+<p><code>$$loss = L = \sum_{ u = user} \sum_{i = item} (R_{ui} - \mu - b_i - b_u - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 + b_i^2 + b_u^2)$$</code></p>
+<p>Both of this models can be solved with different methods such as SGD or ALS. Famous Simon Funk SVD algorithm is no more than the above decomposition solved with SGD.</p>
+<p>P.S. In context of recommender systems the above decomposition is known as “SVD”, but obviously it is not.</p>
+</div>
+<div id="implicit-feedback" class="section level3">
+<h3>Implicit feedback</h3>
+<p>However, most of the recommender systems deal with implicit feedback. This is the result of the fact that it is much easier to observe user behavior than ask a user to explicitly express impression. Also usually datasets with implicit feedback are significantly larger (however noisier) and allow models to find more interesting patterns. So in this post, we will focus on a model which works for implicit feedback.</p>
+</div>
+</div>
+<div id="collaborative-filtering-for-implicit-feedback-datasets" class="section level2">
+<h2>Collaborative Filtering for Implicit Feedback Datasets</h2>
+<p>Weighted alternating least squares model which is described in <a href="http://yifanhu.net/PUB/cf.pdf">Collaborative Filtering for Implicit Feedback Datasets</a> paper became de-facto a standard for matrix factorization in implicit feedback settings (and in fact is implemented in “big data” frameworks such as Spark, Flink, Graphlab). The main idea is similar to “SVD” above but differs in a sense how we treat values in user-items interactions matrix. The main difference is that now we treat all interactions as positive and numbers in user-item interaction matrix reflect <strong>confidence</strong> that user is interested in an item. Below is what we will try to optimize:</p>
+<p><code>$$loss = L = \sum_{ u = user} \sum_{i = item} C_{ui}(P_{ui} - X_uY_i) + \lambda ( ||X||^2 + ||Y||^2 )$$</code> Here <span class="math inline">\(X\)</span>, <span class="math inline">\(Y\)</span> are user and item embeddings.</p>
+<p>In order to explain what are matrices <span class="math inline">\(P\)</span> and <span class="math inline">\(c\)</span> let’s first introduce matrix <span class="math inline">\(R\)</span> which is no more than user-item interactions matrix. It is not presented in the equation above but it implicitly defines matrices <span class="math inline">\(P\)</span>, <span class="math inline">\(C\)</span>:</p>
+<ul>
+<li><span class="math inline">\(P\)</span> is indicator matrix where <span class="math inline">\(P[u, i] = 1\)</span> if user <span class="math inline">\(u\)</span> interacted with item <span class="math inline">\(i\)</span> and <span class="math inline">\(0\)</span> otherwise ( simply we can think <span class="math inline">\(P\)</span> = <span class="math inline">\(sign(R)\)</span>).</li>
+<li>The most interesting part is matrix <span class="math inline">\(C\)</span> - confidence matrix. Confidence matrix can be derived from <span class="math inline">\(R\)</span> with a family of functions with signature: <span class="math inline">\(C = 1 + f(R)\)</span>. Here number <span class="math inline">\(1\)</span> is very important constraint - it allows us to implement efficient optimization algorithm which will be described below.</li>
+</ul>
+<p>Authors of the model propose <span class="math inline">\(C = 1 + \alpha R\)</span>, where alpha is some hyperparameter. We can think that for the observed user-item interactions we are more confident that user will prefer this item over not observed item (which is very logical). For example, let <span class="math inline">\(\alpha = 40\)</span>. In this case, <span class="math inline">\(C_{ui}\)</span> will be equal to <span class="math inline">\(1\)</span> for non-observed user-item interactions and <span class="math inline">\(40 * r_{ui}\)</span> for the observed interactions. Developers can design wide range of functions to construct confidence from raw user-item interactions. For example, alternative function proposed by authors is <span class="math inline">\(C = 1 + \alpha \log(1 + R / \epsilon)\)</span>. I personally highly recommend reading original paper in order to get a better understanding of the logic behind the model.</p>
+<div id="optimization-with-weighted-alternating-least-squares" class="section level3">
+<h3>Optimization with weighted alternating least squares</h3>
+<p>Having defined loss function, we can optimize parameters <span class="math inline">\(X\)</span> and <span class="math inline">\(Y\)</span>. As seen from the equation the <strong>problem is non-convex</strong>. This means there is no efficient solver with convergence guarantees. However, <strong>SGD</strong> proved to be useful in such settings and can find a good local minimum.But it also has some limitations:</p>
+<ul>
+<li>not easy to parallelize (however if the problem is sparse enough, hogwild style asynchronous updates can be used)</li>
+<li>implicit feedback datasets usually can be not very sparse</li>
+<li>additional hyperparameter - learning rate</li>
+</ul>
+<p>Alternatively, we can note that <strong>fixing <span class="math inline">\(X\)</span> or <span class="math inline">\(Y\)</span> makes problem convex</strong>. And we can leverage efficient techniques to solve the optimization problem. So we can fix <span class="math inline">\(X\)</span>, then compute approximation of <span class="math inline">\(Y\)</span> then fix <span class="math inline">\(Y\)</span> and compute approximation of <span class="math inline">\(X\)</span> and so on. This method is called “Alternating Least Squares”.</p>
+</div>
+<div id="know-your-math" class="section level3">
+<h3>Know your math</h3>
+<p>Let’s derive equations:</p>
+<ol style="list-style-type: decimal">
+<li><p>For fixed <span class="math inline">\(Y\)</span>: <code>$$dL/dx_u = -2\sum_{i = item} c_{ui}(p_{ui} - x_u^Ty_i)y_i + 2\lambda x_u = $$</code> <code>$$-2\sum_{i = item} c_{ui}(p_{ui} - y_i^Tx_u)y_i + 2\lambda x_u = $$</code> <code>$$-2Y^TC^up(u) +2Y^TC^uYx_u + 2\lambda x_u$$</code> Setting <span class="math inline">\(dL/dx_u = 0\)</span> for optimal solution gives us <code>$$(Y^T C^u Y+\lambda I) x_u = Y^T C^u p(u)$$</code>. And <span class="math inline">\(x_u\)</span> can be obtained by solving system of linear equations: <code>$$x_u = solve(Y^T C^u Y+\lambda I,  Y^T C^u p(u))$$</code></p></li>
+<li><p>Similarly for fixed <span class="math inline">\(X\)</span> : <code>$$dL/dy_i = -2X^TC^ip(i) +2X^TC^iYy_i + 2\lambda y_i$$</code> <code>$$y_i = solve(X^T C^i X+\lambda I,  X^T C^i p(i))$$</code></p></li>
+</ol>
+<p>Another optimization will come after notice that <span class="math inline">\(X^T C^i X = X^T X + X^T (C^i - I) X\)</span> and <span class="math inline">\(Y^T C^u Y = Y^T Y + Y^T (C^u - I) Y\)</span>. So <span class="math inline">\(X^T X\)</span> and <span class="math inline">\(Y^T Y\)</span> can be precomputed.</p>
+</div>
+<div id="know-your-code" class="section level3">
+<h3>Know your code</h3>
+<p>But not only math matters when building recommender system - knowledge of programming is essential. It is quite easy to translate optimization algorithm above into a code. But at the same time naive version will be increadibly inefficient (for example see <a href="https://github.com/MrChrisJohnson/implicit-mf">minimal python implementation</a> which use <code>numpy</code> and sparse matrices from <code>scipy</code> but still ~ 60000(!!!) times slower than it should be. And similar implementation in <a href="https://github.com/andland/implicitcf">R’s implicitcf package</a>).</p>
+<p>Recap of what we are trying to solve: <span class="math inline">\(y_i = solve(X^T X + \lambda I + X^T (C^i - I) X, X^T C^i p(i))\)</span> (this equation is for items, for user is similar). And naive implementation (actually not totally - see explanation below):</p>
+<pre class="r"><code>solver_items = function(x_user_item, user_factors, lambda, alpha) {
+  # we use confidence = 1 + alpha * x
+  x_user_item_confidence_minus_1 = x_user_item * alpha
+  
+  rank = ncol(user_factors)
+  item_factors = matrix(0, nrow = rank, ncol = ncol(x_user_item))
+  XtX_ridge = t(user_factors) %*% user_factors + diag(lambda)
+  for(i in 1L:nrow(x_user_item)) {
+    # since we subtract &quot;eye&quot; matrix we care only about non-zero entries and our matrix remains sparse!
+    # drop = FALSE to not cast sparse column to dense vector
+    C_i_minus_eye = x_user_item_confidence_minus_1[, i, drop = FALSE]
+    lhs = XtX_ridge + t(X) %*% C_i_minus_eye %*% X
+    
+    # since we multiply by indicator p(i) we really care only about non-zero entries!
+    C_i_p_i = x_user_item * alpha
+    C_i_p_i@x = C_i_p_i@x + 1
+    rhs = t(X) %*% C_i_p_i
+    
+    item_factors[ , i] = solve(lhs, rhs)
+  }
+  item_factors
+}</code></pre>
+<p><strong>Note that we never cast our large sparse user-item matrix to dense! we never materialize our confidence matrix. Here as promised we exploit special structure of confidence function - <span class="math inline">\(C = 1 + f(R)\)</span> </strong></p>
+<p>But as I said above this implementation is 50000x - 100000x slower than it can be. And one of the main problems is access pattern to rows/columns of sparse matrices. Formats in which sparse matrices are stored (CSC, CSR) are designed for efficient matrix operations, not random access. Developers should avoid matrix slicing in hot paths of code. Another problem is that even after subsetting we multiply sparse vector by a large dense matrix. Which is effectively equal to just subsetting columns of dense matrix which correspond to non-zero indices in sparse vector and elementwise product to sparse vector values.</p>
+<p>Moreover, since we are doing this sequentially user-by-user we can efficiently use CSC or CSR compressed matrix format. Another great thing about ALS is that it can be easily parallelized since calculations for each user and each item are independent. So each iteration in a loop above could be done in parallel!</p>
+<p>Summarizing the above we can rewrite our solver in the following way:</p>
+<pre class="r"><code>#&#39; @X - user or item embeddings of the shape rank * n_user or rank * n_item
+#&#39; @confidence_uset_item sparse user-item interactions matrix non-zero values of which 
+#&#39; were transformed to confidence matrix with using `1 + f(x)`
+#&#39; @Lambda - regularization constant
+solver = function(X, confidence_uset_item, Lambda, n_cores = 1, ...) {
+  XtX = tcrossprod(X)
+  XtX_ridge = XtX + Lambda
+  nc = ncol(confidence_uset_item)
+  RES = parallel::mclapply(1:nc, function(i) {
+    p1 = confidence_uset_item@p[[i]]
+    p2 = confidence_uset_item@p[[i + 1L]]
+    pind = p1 + seq_len(p2 - p1)
+    ind = confidence_uset_item@i[pind] + 1L
+    
+    confidence = confidence_uset_item@x[pind]
+    X_i = X[, ind, drop = FALSE]
+
+    lhs = XtX_ridge + X_i %*% (t(X_i) * (confidence - 1))
+    rhs = X_i %*% confidence
+    solve(lhs, rhs)
+  }, mc.cores = n_cores, ...)
+  do.call(cbind, RES)
+}</code></pre>
+<p>Using the above insights allowed us to write weighted ALS solver in <strong>pure R which is comparable in speed to highly optimized Quora <code>qmf</code> solver and Spark ALS</strong> (benchmarks in next post).</p>
+</div>
+</div>
+<div id="reco-package" class="section level2">
+<h2><strong>reco</strong> package</h2>
+<p>Also I’m glad to open-source my R’s <a href="https://github.com/dselivanov/reco">reco</a> package which uses <code>RcppArmadillo</code> and <code>OpenMP</code>, so it is even more performant and memory friendly. In the next post I will show how to build recommendations on large real-world datasets. We will see that cross-validation of recommendations is not an obvious thing and will learn how to make recommendations for new users (which is usually not described in articles and a lot of people are struggling with).</p>
+<div id="know-your-math-know-you-code.-stay-tuned." class="section level3">
+<h3>Know your math, know you code. Stay Tuned.</h3>
+</div>
+</div>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/" title="Fitting logistic regression on 100gb dataset on a laptop">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/" title="Matrix factorization for recommender systems (part 2)">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-07-10-bench-wrmf/">Benchmarking different implementations of weighted-ALS matrix factorization</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/">Matrix factorization for recommender systems (part 2)</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/">Matrix factorization for recommender systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/r">r</a></li><li><a href="/tags/recommender-systems">recommender-systems</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        for(var all in MathJax.Hub.getAllJax()) {
+            all.SourceElement().parentNode.className += ' has-jax';
+
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

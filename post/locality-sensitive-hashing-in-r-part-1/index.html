@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Locality Sensitive Hashing in R  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="" />
+
+<meta name="keywords" content="LSH, ">
+
+
+<meta property="og:title" content="Locality Sensitive Hashing in R  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/locality-sensitive-hashing-in-r-part-1/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content=""/>
+<meta property="og:article:published_time" content="2015-01-02T00:00:00Z" />
+<meta property="og:article:modified_time" content="2015-01-02T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="LSH">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Locality Sensitive Hashing in R" />
+<meta name="twitter:description" content="" />
+<meta name="twitter:url" content="/post/locality-sensitive-hashing-in-r-part-1/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Locality Sensitive Hashing in R",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2015-01-02",
+    "description": "",
+    "wordCount":  1346 
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/locality-sensitive-hashing-in-r-part-1/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.18" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Locality Sensitive Hashing in R
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2015-01-02">2 Jan, 2015</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 7 min
+  &middot; (1346 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/lsh" class="label label-primary">LSH</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  
+
+<h2 id="introduction">Introduction</h2>
+
+<p>In the next series of posts I will try to explain base concepts <strong>Locality Sensitive Hashing technique</strong>.</p>
+
+<p>Note, that I will try to follow general functional programming style. So I will use R&rsquo;s <a href="https://stat.ethz.ch/R-manual/R-devel/library/base/html/funprog.html">Higher-Order Functions</a> instead of traditional <strong>R&rsquo;s <em>*apply</em></strong> functions family (I suppose this post will be more readable for non R users). Also I will use <strong>brilliant pipe operator</strong> <code>%&gt;%</code> from <a href="http://cran.r-project.org/web/packages/magrittr/">magrittr</a> package. We will start with basic concepts, but end with very efficient implementation in R (it is about 100 times faster than python implementations I found).</p>
+
+<h2 id="the-problem">The problem</h2>
+
+<p>Imagine the following interesting problem. We have two <strong>very large</strong> social netwotks (for example <strong>facebook and google+</strong>), which have hundreds of millions of profiles and we want to determine profiles owned by same person. One reasonable approach is to assume that these people have nearly same or at least highly overlapped sets of friends in both networks. One well known measure for determining degree of similarity of sets is <a href="http://en.wikipedia.org/wiki/Jaccard_index">Jaccard Index</a>:<br />
+$$J(SET_1, SET_2) = {|SET_1 \cap SET_2|\over |SET_1 \cup SET_2| }$$</p>
+
+<p>Set operations are computationally cheap and straightforward solution seems quite good. But let&rsquo;s try to estimate computational time for duplicates detection for only people with name &ldquo;John Smith&rdquo;. Imagine that in average each person has 100 friends:</p>
+
+<pre><code class="language-r"># for reproducible results
+set.seed(seed = 17)
+library('microbenchmark')
+# we will use brilliant pipe operator %&gt;%
+library('magrittr')
+jaccard &lt;- function(x, y) {
+  set_intersection &lt;- length(intersect(x, y))
+  set_union &lt;- length(union(x, y))
+  return(set_intersection / set_union)
+}
+# generate &quot;lastnames&quot;
+lastnames &lt;- Map(function(x) paste(sample(letters, 3), collapse = ''), 1:1e5) %&gt;% unique
+print(head(lastnames))
+</code></pre>
+
+<pre class="output">
+[[1]]
+[1] &quot;eyl&quot;
+
+[[2]]
+[1] &quot;ukm&quot;
+
+[[3]]
+[1] &quot;fes&quot;
+
+[[4]]
+[1] &quot;fka&quot;
+
+[[5]]
+[1] &quot;vuw&quot;
+
+[[6]]
+[1] &quot;ypg&quot;
+</pre>
+
+<pre><code class="language-r">friends_set_1 &lt;- sample(lastnames, 100, replace = F)
+friends_set_2 &lt;- sample(lastnames, 100, replace = F)
+microbenchmark(jaccard(friends_set_1, friends_set_2))
+</code></pre>
+
+<pre class="output">
+Unit: microseconds
+                                  expr   min      lq     mean  median
+ jaccard(friends_set_1, friends_set_2) 32.62 34.2485 37.92605 35.2385
+      uq     max neval
+ 36.6465 150.625   100
+</pre>
+One operation takes 50 microseconds in average (on my machine). If we have 100000 of peoples with name _John Smith_ and we have to compare all pairs, total computation **will take more than 100 hours**!
+
+```r
+hours <- (50 * 1e-6) * 1e5 * 1e5 / 60 / 60
+hours
+```
+
+
+
+<pre class="output">
+[1] 138.8889
+</pre>
+Of course this is unappropriate because of $$O(n^2)$$ complexity of our brute-force algorithm.  
+
+## Minhashing
+To solve this kind problem we will use [Locality-sensitive hashing]((http://en.wikipedia.org/wiki/Locality-sensitive_hashing)) - a method of performing probabilistic dimension reduction of high-dimensional data. It provides good tradeoff between accuracy and computational time and roughly speaking has $$O(n)$$ complexity.  
+I will explain one scheme of **LSH**, called [MinHash](http://en.wikipedia.org/wiki/MinHash).  
+The intuition of the method is the following: we will try to hash the input items so that similar items are mapped to the same buckets with high probability (the number of buckets being much smaller than the universe of possible input items).  
+Let's construct simple example:
+
+```r
+set1 <- c('SMITH', 'JOHNSON', 'WILLIAMS', 'BROWN')
+set2 <- c('SMITH', 'JOHNSON', 'BROWN')
+set3 <- c('THOMAS', 'MARTINEZ', 'DAVIS')
+set_list <- list(set1, set2, set3)
+```
+Now we have 3 sets to compare and identify profiles, related to same "John Smith". From these sets we will construct matrix which encode relations between sets:
+
+```r
+sets_dict <- unlist(set_list) %>% unique
+
+m <- Map(f = function(set, dict) as.integer(dict %in% set), 
+         set_list, 
+         MoreArgs = list(dict = sets_dict)) %>% 
+  do.call(what = cbind, .)
+
+# This is equal to more traditional R's sapply call:
+# m <- sapply(set_list, FUN = function(set, dict) as.integer(dict %in% set), dict = sets_dict, simplify = T)
+
+dimnames(m) <- list(sets_dict, paste('set', 1:length(set_list), sep = '_'))
+print(m)
+```
+
+
+
+<pre class="output">
+         set_1 set_2 set_3
+SMITH        1     1     0
+JOHNSON      1     1     0
+WILLIAMS     1     0     0
+BROWN        1     1     0
+THOMAS       0     0     1
+MARTINEZ     0     0     1
+DAVIS        0     0     1
+</pre>
+Let's call this matrix **input-matrix**.
+In our representation similarity of two sets from source array equal to the similarity of two corresponding columns with non-zero rows:  
+
+name | set_1 | set_2 | intersecton | union  
+--|--|---|---|----
+SMITH|1|1|+|+
+JOHNSON|1|1|+|+  
+WILLIAMS|1|0|-|+  
+BROWN|1|1|+|+  
+THOMAS|0|0|-|-  
+MARTINEZ|0|0|-|-  
+DAVIS|0|0|-|-  
+
+From table above we can conclude, that **jaccard index between set\_1 and set\_2 is 0.75**.  
+Let's check:
+
+```r
+print(jaccard(set1, set2))
+```
+
+
+
+<pre class="output">
+[1] 0.75
+</pre>
+
+<pre><code class="language-r">column_jaccard &lt;-  function(c1, c2) {
+  non_zero &lt;- which(c1 | c2)
+  column_intersect &lt;- sum(c1[non_zero] &amp; c2[non_zero])
+  column_union &lt;- length(non_zero)
+  return(column_intersect / column_union)
+}
+isTRUE(jaccard(set1, set2) == column_jaccard(m[, 1], m[, 2]))
+</code></pre>
+
+<pre class="output">
+[1] TRUE
+</pre>
+All the magic starts here. Suppose random permutation of rows of the **input-matrix** `m`. And let's define **minhash function** $$h(c)$$ = # of first row in which column $$c == 1$$. If we will use $$N$$ **independent** permutations we will end with $$N$$ minhash functions. So we can construct **signature-matrix** from **input-matrix** using these minhash functions. Below we will do it not very efficiently with 2 nested ```for``` loops. But the logic should be very clear.
+
+```r
+# for our toy example we will pick N = 4
+N <- 4
+sm <- matrix(data = NA_integer_, nrow = N, ncol = ncol(m))
+perms <- matrix(data = NA_integer_, nrow = nrow(m), ncol = N)
+# calculate indexes for non-zero entries for each column
+non_zero_row_indexes <- apply(m, MARGIN = 2, FUN = function(x) which (x != 0) )
+for (i in 1 : N) {
+  # calculate permutations
+  perm <- sample(nrow(m))
+  perms[, i] <- perm
+  # fill row of signature matrix
+  for (j in 1:ncol(m))
+    sm[i, j] <-  min(perm[non_zero_row_indexes[[j]]])
+}
+print(sm)
+```
+
+
+
+<pre class="output">
+     [,1] [,2] [,3]
+[1,]    3    3    1
+[2,]    1    1    3
+[3,]    1    1    2
+[4,]    1    1    4
+</pre>
+You can see how we obtain **signature-matrix** matrix after "minhash transformation". Permutations and corresponding signatures marked with same colors:
+
+|perm_1|perm_2|perm_3|perm_4|set_1| set_2| set_3|
+ |--|--|--|--|--|--|--|
+ <span style="background-color:lightgreen">4 </span>| <span style="background-color:orange">1 </span>| <span style="background-color:lightblue">4 </span>| <span style="background-color:yellow">6 </span>| 1 | 1 | 0 |
+ <span style="background-color:lightgreen">3 </span>| <span style="background-color:orange">4 </span>| <span style="background-color:lightblue">1 </span>| <span style="background-color:yellow">1 </span>| 1 | 1 | 0 |
+ <span style="background-color:lightgreen">7 </span>| <span style="background-color:orange">6 </span>| <span style="background-color:lightblue">6 </span>| <span style="background-color:yellow">2 </span>| 1 | 0 | 0 |
+ <span style="background-color:lightgreen">6 </span>| <span style="background-color:orange">2 </span>| <span style="background-color:lightblue">7 </span>| <span style="background-color:yellow">3 </span>| 1 | 1 | 0 |
+ <span style="background-color:lightgreen">5 </span>| <span style="background-color:orange">3 </span>| <span style="background-color:lightblue">2 </span>| <span style="background-color:yellow">5 </span>| 0 | 0 | 1 |
+ <span style="background-color:lightgreen">2 </span>| <span style="background-color:orange">5 </span>| <span style="background-color:lightblue">3 </span>| <span style="background-color:yellow">7 </span>| 0 | 0 | 1 |
+ <span style="background-color:lightgreen">1 </span>| <span style="background-color:orange">7 </span>| <span style="background-color:lightblue">5 </span>| <span style="background-color:yellow">4 </span>| 0 | 0 | 1 |
+
+
+|set_1| set_2| set_3|
+|--|--|--|
+|<span style="background-color:lightgreen">3</span>|<span style="background-color:lightgreen">3</span>|<span style="background-color:lightgreen">1</span>|
+|<span style="background-color:orange">1</span>|<span style="background-color:orange">1</span>|<span style="background-color:orange">3</span>|
+|<span style="background-color:lightblue">1</span>|<span style="background-color:lightblue">1</span>|<span style="background-color:lightblue">2</span>|
+|<span style="background-color:yellow">1</span>|<span style="background-color:yellow">1</span>|<span style="background-color:yellow">4</span>|
+
+You can notice that set_1 and set_2 signatures are very similar and signature of set_3 dissimilar with set_1 and set_2.
+
+```r
+jaccard_signatures <-  function(c1, c2) {
+  column_intersect <- sum(c1 == c2)
+  column_union <- length(c1)
+  return(column_intersect / column_union)
+}
+print(jaccard_signatures(sm[, 1], sm[, 2]))
+```
+
+
+
+<pre class="output">
+[1] 1
+</pre>
+
+<pre><code class="language-r">print(jaccard_signatures(sm[, 1], sm[, 3]))
+</code></pre>
+
+<p><pre class="output">
+[1] 0
+</pre>
+Intuition is very straighforward. Let&rsquo;s look down the permuted columns $$c_1$$ and $$c_2$$ until we detect <strong>1</strong>.</p>
+
+<ul>
+<li>If in both columns we find ones - (1, 1), then $$h(c_1) = h(c_2)$$.</li>
+<li>In case (0, 1) or (1, 0) $$h(c_1) \neq h(c_2)$$. So the probability over all permutations of rows that $$h(c_1) = h(c_2)$$ is the same as $$J(c_1, c_2)$$.<br /></li>
+</ul>
+
+<p>Moreover there exist theoretical guaranties for estimation of Jaccard similarity: for any constant $$\varepsilon &gt; 0$$ there is a constant $$k = O(1/\varepsilon^2)$$
+such that the expected error of the estimate is at most $$\varepsilon$$.</p>
+
+<h3 id="implementation-and-bottlenecks">Implementation and bottlenecks</h3>
+
+<p>Suppose <strong>input-matrix</strong> is very big, say <code>1e9</code> rows. It is quite hard computationally to permute 1 billion rows. Plus you need to store these entries and access these values. It is common to use following scheme instead:</p>
+
+<ul>
+<li>Pick $$N$$ independent hash functions $$h_i&copy;$$ instead of $$N$$ premutations, $$i = 1..N$$.<br /></li>
+<li>For each column $$c$$ and each hash function $$h_i$$, keep a &ldquo;slot&rdquo; $$M(i, c)$$.<br /></li>
+<li>$$M(i, c)$$ will become the smallest value of $$h_i&reg;$$ for which column $$c$$ has 1 in row $$r$$. I.e., $$h_i&reg;$$ gives order of rows for $$i^{th}$$ permutation.<br /></li>
+</ul>
+
+<p>So we end up with following <strong>ALGORITHM(1)</strong> from excellent <a href="http://www.mmds.org">Mining of Massive Datasets</a> book:</p>
+
+<pre><code>for each row r do begin
+  for each hash function hi do
+    compute hi (r);
+  for each column c
+    if c has 1 in row r
+      for each hash function hi do
+        if hi(r) is smaller than M(i, c) then
+          M(i, c) := hi(r);
+end;
+</code></pre>
+
+<p>I <strong>highly recommend</strong> to watch video about minhashing from Stanford <a href="https://class.coursera.org/mmds-001">Mining Massive Datasets</a> course.</p>
+
+<div align="center"><iframe width="854" height="510" src="http://www.youtube.com/embed/pqZh-Uu9VSk" frameborder="0" allowfullscreen></iframe></div>
+
+<h2 id="summary">Summary</h2>
+
+<p>Let&rsquo;s summarize what we have learned from first part of tutorial:</p>
+
+<ul>
+<li>We can construct <strong>input-matrix</strong> from given list of sets. But actually we didn&rsquo;t exploit the fact, that <strong>input-matrix</strong> is <strong>very sparse</strong> and construct it as R&rsquo;s regular dense matrix. It is very computationally and RAM inefficient.</li>
+<li>We can construct <strong>dense</strong> signature-matrix from <strong>input-matrix</strong>. But we only implemented algorithm that is based on permutations and also not very efficient.</li>
+<li>We understand <strong>theorethical guaranties</strong> of our algorithm. They are proportional to number of <strong>independent</strong> hash functions we will pick. But how will we actually construct this family of functions? How can we efficiently increase number of functions in our family when needed?</li>
+<li>Our <strong>signature-matrix</strong> has small <strong>fixed</strong> number of rows. Each column represents input set and $$J(c_1, c_2)$$ ~ $$J(set_1, set_2)$$. But we <strong>still have $$O(n^2)$$ complexity</strong>, because we need to compair each pair to find duplicate candidates.</li>
+</ul>
+
+<p>In the next posts I will describe how to efficently construct and store <strong>input-matrix</strong> in <strong>sparse</strong> format.
+Then we will discuss how to <strong>construct family of hash functions</strong>. After that we will implement <strong>fast vectorized</strong> version of <strong>ALGORITHM(1)</strong>. And finally we will see how to use <strong>Locality Sensitive Hashing</strong> to determine candidate pairs for similar sets in $$O(n)$$ time. Stay tuned!</p>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/rmongodb-1.8.0/" title="rmongodb 1.8.0">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/installing-cuda-toolkit-and-gputools/" title="Installing cuda toolkit and related R packages">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec/">Analyzing texts with text2vec package</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-and-mssql/">Working with MS SQL server on non-windows systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/installing-cuda-toolkit-and-gputools/">Installing cuda toolkit and related R packages</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li><li><a href="/tags/gpgpu">gpgpu</a></li><li><a href="/tags/lsh">lsh</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        
+        
+        
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    </script>
+
+  </body>
+</html>
+
