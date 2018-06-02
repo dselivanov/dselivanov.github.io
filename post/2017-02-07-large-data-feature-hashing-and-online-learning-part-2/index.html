@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Fitting logistic regression on 100gb dataset on a laptop  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 2)" />
+
+<meta name="keywords" content="kaggle, data_table, big_data, online_learning, hashing_trick, ">
+
+
+<meta property="og:title" content="Fitting logistic regression on 100gb dataset on a laptop  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 2)"/>
+<meta property="og:article:published_time" content="2017-02-14T00:00:00Z" />
+<meta property="og:article:modified_time" content="2017-02-14T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="kaggle">
+    
+<meta property="og:article:tag" content="data_table">
+    
+<meta property="og:article:tag" content="big_data">
+    
+<meta property="og:article:tag" content="online_learning">
+    
+<meta property="og:article:tag" content="hashing_trick">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Fitting logistic regression on 100gb dataset on a laptop" />
+<meta name="twitter:description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 2)" />
+<meta name="twitter:url" content="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Fitting logistic regression on 100gb dataset on a laptop",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2017-02-14",
+    "description": "Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 2)",
+    "wordCount": 1865
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.21" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Fitting logistic regression on 100gb dataset on a laptop
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2017-02-14">14 Feb, 2017</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 9 min
+  &middot; (1865 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/kaggle" class="label label-primary">kaggle</a>
+  
+  <a href="/tags/data_table" class="label label-primary">data_table</a>
+  
+  <a href="/tags/big_data" class="label label-primary">big_data</a>
+  
+  <a href="/tags/online_learning" class="label label-primary">online_learning</a>
+  
+  <a href="/tags/hashing_trick" class="label label-primary">hashing_trick</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  <p><strong>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - <a href="https://github.com/dselivanov/kaggle-outbrain" class="uri">https://github.com/dselivanov/kaggle-outbrain</a>.</strong></p>
+<p>This is continue of <a href="http://dsnotes.com/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Lessons learned from “Outbrain Click Prediction” kaggle competition (part 1)</a>. As a quick recap - we achieved <a href="mailto:MAP@12">MAP@12</a> ~ 0.67 which is equal to ~90-100 position on leaderboard. And we didn’t use information about page views from 100gb (30gb compressed) <code>page_views.csv.zip</code> file.</p>
+<div id="splitting" class="section level3">
+<h3>Splitting</h3>
+<p>As it is impossible to read <em>zip</em> file with R line by line (at least I don’t know solution) we will split file into many “mini-batches” in a way that each such batch can be efficiently read from disk into RAM. Moreover this will allow to process chunks in parallel. As mentioned in first part your best friend are <code>data.table</code> and UNIX CLI. We will use <code>split</code> utility to split file. Moreover we will gzip each chunk, so they won’t occupy 100gb on disk.</p>
+<pre class="sh"><code>mkdir page_views_splits
+unzip -p page_views.csv.zip | split --line-bytes=300m --filter=&#39;gzip --fast &gt; ./page_views_splits/$FILE.gz&#39;</code></pre>
+<p>In a pipe we: 1. uncompress zip stream 1. with argument <code>--line-bytes=300m</code> we create batches of 300 mb (command doesn’t break lines!) 1. compress to gzip file (fast comression, minimal compression rate) 1. save it to <code>page_views_splits</code> directory which we created at first line</p>
+<p>This will take ~ 20-30 minutes.</p>
+<p>For <strong>OS X</strong> some modifications needed. First install gnu command line utils coreutils - built in tools are heavily outdated:</p>
+<pre class="sh"><code>brew install coreutils</code></pre>
+<p>Then use gsplit instead of split</p>
+<pre class="sh"><code>mkdir page_views_splits
+unzip -p page_views.csv.zip | gsplit --line-bytes=300m --filter=&#39;gzip --fast &gt; ./page_views_splits/$FILE.gz&#39;</code></pre>
+</div>
+<div id="parsing" class="section level3">
+<h3>Parsing</h3>
+<p>Now we can parse each file in memory and can do it in parallel. Also it is interesting, that <code>page_views.zip</code> contains views not only for users in test and train set, but also for not observed users. While I pretty sure this information can also be usefule, in this post we will filter out views for such users - this will reduce data set significantly (We didn’t use this data in our solution ans as far as I know winners didn’t use it too). So let’s start.</p>
+<p>First load <code>events</code> data we prepared in part 1 and find all unique user ids:</p>
+<pre class="r"><code>library(data.table)
+library(Matrix)
+library(methods)
+library(magrittr)
+
+events = readRDS(&#39;~/projects/kaggle/outbrain/data/events.rds&#39;)
+uuid_events = unique(events$uuid)
+rm(events);gc()</code></pre>
+<p>We will hash string based <code>uuid</code>s into integer ones as we did in part 1:</p>
+<pre class="r"><code>hash_uuid = function(uuid_string, H_SIZE = 2**28) {
+  text2vec:::hasher(uuid_string, H_SIZE)
+}</code></pre>
+<p>Will process data in 4 threads/processes and partition by <code>uuid</code> into 50 buckets (<strong>same number we partitioned in part 1</strong>):</p>
+<pre class="r"><code>library(doParallel)
+registerDoParallel(4)
+
+N_PART = 50
+for(x in 0:(N_PART - 1)) {
+  # here we will put uuid partitioned views for each file
+  dir.create(sprintf(&quot;~/projects/kaggle/outbrain/data/raw/views/%02d&quot;, x))
+}
+# by default saveRDS can save file with compression level = 6 - very slow
+# or without compression - large files.
+save_rds_compressed = function(x, file, compr_lvl = 1) {
+  con = gzfile(file, open = &quot;wb&quot;, compression = compr_lvl)
+  saveRDS(x, file = con)
+  close.connection(con)
+}</code></pre>
+<p>We will read file chunks, filter out not relevant data columns and unobserved <code>uuid</code>s. On my laptop this tooks ~20 minutes:</p>
+<pre class="r"><code>colnames = c(&quot;uuid&quot;, &quot;document_id&quot;, &quot;timestamp&quot;, &quot;platform&quot;, &quot;geo_location&quot;, &quot;traffic_source&quot;)
+fls = list.files(&quot;data/raw/page_views_splits/&quot;, full.names = TRUE)
+foreach(f = fls, .inorder = F, .combine = c, .multicombine = TRUE,
+        .options.multicore = list(preschedule = FALSE)) %dopar% {
+  if(basename(f) == &quot;xaa.gz&quot;) header = T else  header = F
+  # will only need c(&quot;uuid&quot;, &quot;document_id&quot;, &quot;timestamp&quot;) -  first 3 columns
+  # fread can consume UNIX pipe as input, which is not the thing many people know about
+  dt = fread(paste(&quot;zcat &lt; &quot;, f), header = header, col.names = colnames[1:3], select = 1:3)
+  dt[, uuid := hash_uuid(uuid)]
+  # filter out not observed uuids
+  j = dt[[&#39;uuid&#39;]] %in% uuid_events
+  dt = dt[j, ]
+  # partition by uuid and save
+  for(i in 0:(N_PART - 1)) {
+    out = sprintf(&quot;~/projects/kaggle/outbrain/data/raw/views/%02d/%s.rds&quot;, i, basename(f))
+     # see save_rds_compressed from part 1 of this artice
+    save_rds_compressed(dt[uuid %% N_PART == i, ], out)
+  }
+}</code></pre>
+<p>Now for each <code>uuid</code> partition we have many files with views. Convenient way is to collapse them to single file per partition:</p>
+<pre class="r"><code>for(x in 0:(N_PART - 1))
+  dir.create(sprintf(&quot;~/projects/kaggle/outbrain/data/raw/views_comb/%02d&quot;, x))
+  
+res = foreach(chunk = 0:(N_PART - 1), .inorder = FALSE, .multicombine = TRUE,
+        .options.multicore = list(preschedule = FALSE)) %dopar% {
+          dir = sprintf(&quot;~/projects/kaggle/outbrain/data/raw/views/%02d/&quot;, chunk)
+          fls = list.files(dir)
+          dt = fls %&gt;% lapply(function(x) readRDS(paste0(dir, x))) %&gt;% 
+            rbindlist()
+          save_rds_compressed(dt, sprintf(&quot;~/projects/kaggle/outbrain/data/raw/views_comb/%02d.rds&quot;, chunk))
+        }</code></pre>
+<p><strong>And we are done</strong> - we can join each chunk from <code>page_views</code> with each chunk of <code>events</code> because they contain information about same group of users - users which <code>uuid</code> have same modulo of division by <code>N_PART = 50</code>.</p>
+</div>
+<div id="adding-page-views-to-the-model" class="section level2">
+<h2>Adding page views to the model</h2>
+<p>Recap - in <a href="http://dsnotes.com/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">part 1</a> we have created sparse model matrix for each <code>uuid</code> partition. Also for each <code>uuid</code> partition we have stored dataframe with <em>uuid, ad_id, promo_document_id, campaign_id, advertiser_id</em>, in a was that each row of the dataframe corresponds to row in feature matrix. We stored it here:</p>
+<pre class="r"><code>events_matrix_dir = &quot;~/projects/kaggle/outbrain/data/events_matrix/&quot;</code></pre>
+<p>Now we want to model interaction between previos page views and whether user will click on a given adverisement. In order to do that we will model interactions between each page user viewed and each attribute of advertisement - <code>ad_id</code>, <code>promo_document_id</code>, <code>campaign_id</code>, <code>advertiser_id</code>. We can express them via hashing - same interactions will be hashed to same values. Hash function will be the same we used before - add interaction feature indices (with offset = some hash on feature name).</p>
+<p>Let’s start. Views data is here:</p>
+<pre class="r"><code>views_dir = &quot;~/projects/kaggle/outbrain/data/raw/views_comb/&quot;</code></pre>
+<p>We will:</p>
+<ol style="list-style-type: decimal">
+<li>read partition with matrix and corresponding ad context data frame (previously saved in part 1)</li>
+<li>read partition with views</li>
+<li>join views dataframe (actually <code>data.table</code>) with as context dataframe and calculate interactions with function above</li>
+<li><code>cbind</code> events matrix (from step 1) with views interaction matrix (from step 3)</li>
+<li>optionally save new matrix to disk, so in future we can tune model parameters and don’t rebuild feature matrix</li>
+</ol>
+<pre class="r"><code>string_hasher = function(x, h_size = 2**24) 
+  text2vec:::hasher(x, h_size)
+dir = &quot;~/projects/kaggle/outbrain/data/events_views_matrix/&quot;
+# dir.create(path = dir)
+# i = 0
+N_PART = 50
+# for(i in (0:(N_PART - 1))) {
+for(i in (0:(N_PART - 1))) {
+  event_data = readRDS(sprintf(&quot;%s/%d.rds&quot;, events_matrix_dir, i))
+  # as we know rows of the data frame corresponds to row number in feature matrix event_data$x
+  event_data$dt[, i := 0L:(.N - 1L)]
+  setkey(event_data$dt, &quot;uuid&quot;)
+  # views_data = fst::read.fst(sprintf(&quot;%s/%02d.fst&quot;, views_dir, i), as.data.table = TRUE)
+  views_data = readRDS(sprintf(&quot;%s/%02d.rds&quot;, views_dir, i))
+  # will just use 1-hot encoded page views, so group by uuid, document_id and drop N at the end
+  views_data = views_data[, .N, keyby = .(uuid, document_id)][, .(uuid, document_id)]
+  
+  # now build interactions - join views and event_data$dt by uuid
+  views_h_size = 2**24
+  views_interactions = views_data[event_data$dt, .(
+    # row index
+    i, 
+    # column indices
+    j1 = (string_hasher(&quot;promo_document_id&quot;) + 1.0 * promo_document_id * document_id) %% views_h_size,
+    j2 = (string_hasher(&quot;campaign_id&quot;) + 1.0 * campaign_id * document_id) %% views_h_size,
+    j3 = (string_hasher(&quot;advertiser_id&quot;) + 1.0 * advertiser_id * document_id) %% views_h_size,
+    j4 = (string_hasher(&quot;advertiser_id + campaign_id&quot;) + 1.0 * advertiser_id * campaign_id * document_id) %% views_h_size
+  ), 
+  on = .(uuid = uuid), allow.cartesian=TRUE, nomatch = 0]
+  # turn df into sparse matrix
+  m_views = sparseMatrix(i = rep(views_interactions$i, 4), 
+                         j = c(views_interactions$j1, views_interactions$j2, views_interactions$j3, views_interactions$j4), 
+                         x = 1, dims = c(nrow(event_data$dt), views_h_size), index1 = F, giveCsparse = F, check = F)
+  # cbind with events matrix and convert to CSR
+  m = cbind(event_data$x, m_views) %&gt;% as(&quot;RsparseMatrix&quot;)
+  save_rds_compressed(list(x = m, y = event_data$y), file = sprintf(&quot;%s/%02d&quot;, dir, i))
+  message(sprintf(&quot;%s - chunk %02d&quot;, Sys.time(), i))
+}</code></pre>
+<p>Also need to prepare matrix for cross-validation. First read cross-validation matrix from part 1:</p>
+<pre class="r"><code>event_data_cv = readRDS(&quot;~/projects/kaggle/outbrain/data/dt_cv_0.rds&quot;)
+event_data_cv$dt[, i := 0L:(.N - 1L)]
+setkey(event_data_cv$dt, &quot;uuid&quot;)</code></pre>
+<p>As a remider - for CV we saved partition 0.</p>
+<pre class="r"><code>cv_part = 0
+views_data = readRDS(sprintf(&quot;%s/%02d.rds&quot;, views_dir, cv_part))
+# will just use 1-hot encoded page views, so group by uuid, document_id and drop N at the end
+views_data = views_data[, .N, keyby = .(uuid, document_id)][, .(uuid, document_id)]</code></pre>
+<p>And now join same way:</p>
+<pre class="r"><code>  views_h_size = 2**24
+  views_interactions = views_data[event_data_cv$dt, .(
+    # row index
+    i, 
+    # column indices
+    j1 = (string_hasher(&quot;promo_document_id&quot;) + 1.0 * promo_document_id * document_id) %% views_h_size,
+    j2 = (string_hasher(&quot;campaign_id&quot;) + 1.0 * campaign_id * document_id) %% views_h_size,
+    j3 = (string_hasher(&quot;advertiser_id&quot;) + 1.0 * advertiser_id * document_id) %% views_h_size,
+    j4 = (string_hasher(&quot;advertiser_id + campaign_id&quot;) + 1.0 * advertiser_id * campaign_id * document_id) %% views_h_size
+    ), 
+  on = .(uuid = uuid), allow.cartesian=TRUE, nomatch = 0]
+  # turn df into sparse matrix
+  m_views = sparseMatrix(i = rep(views_interactions$i, 4), 
+                         j = c(views_interactions$j1, views_interactions$j2, views_interactions$j3, views_interactions$j4), 
+                         x = 1, dims = c(nrow(event_data_cv$dt), views_h_size), index1 = F, giveCsparse = F, check = F)
+  # cbind with events matrix and convert to CSR
+  m = cbind(event_data_cv$x, m_views) %&gt;% as(&quot;RsparseMatrix&quot;)
+  save_rds_compressed(list(x = m, y = event_data_cv$y, dt = event_data_cv$dt), file = &quot;~/projects/kaggle/outbrain/data/cv_views_blog.rds&quot;)</code></pre>
+<p>Now we are done with data preparation and can continiue with FTRL model. I would like to highlite, that in compressed form, matrix occupies <strong>~25gb</strong> on disk. In uncomressed format it is <strong>~100gb</strong>.</p>
+</div>
+<div id="fitting-ftrl-from-disk" class="section level1">
+<h1>Fitting FTRL from disk</h1>
+<p>Goof thing is that now problem is not very different from that we already solved in part 1. Now we will just read our matrix chunk by chunk and update model:</p>
+<pre class="r"><code>library(FTRL)
+m_dir = &quot;~/projects/kaggle/outbrain/data/events_views_matrix/&quot;
+m_files = list.files(m_dir)
+
+ftrl = FTRL$new(alpha = 0.05, beta = 0.5, lambda = 10, l1_ratio = 1, dropout = 0)
+cv = readRDS(&quot;~/projects/kaggle/outbrain/data/dt_cv_0.rds&quot;)
+i = 1
+for( fl in m_files) {
+  data = readRDS(sprintf(&quot;%s/%s&quot;, m_dir, fl))
+  ftrl$partial_fit(X = data$x, y = data$y, nthread = 8)
+  if(i %% 5 == 0) {
+    train_auc = glmnet::auc(data$y, ftrl$predict(data$x))
+    p = ftrl$predict(cv$x)
+    dt_cv = copy(cv$dt[, .(display_id, clicked = cv$y, p = -p)])
+    setkey(dt_cv, display_id, p)
+    mean_map12 = dt_cv[ , .(map_12 = 1 / .Internal(which(clicked == 1))), by = display_id][[&#39;map_12&#39;]] %&gt;% 
+      mean %&gt;% round(5)
+    cv_auc = glmnet::auc(cv$y, p)
+    message(sprintf(&quot;%s batch %d train_auc = %f, cv_auc = %f, map@12 = %f&quot;, Sys.time(), i, train_auc, cv_auc, mean_map12))
+  }
+  i = i + 1
+}</code></pre>
+<blockquote>
+<p>2017-02-18 19:01:42 batch 5 train_auc = 0.751388, cv_auc = 0.732823, <a href="mailto:map@12">map@12</a> = 0.658050<br />
+2017-02-18 19:02:32 batch 10 train_auc = 0.760015, cv_auc = 0.740163, <a href="mailto:map@12">map@12</a> = 0.664360<br />
+2017-02-18 19:03:24 batch 15 train_auc = 0.767968, cv_auc = 0.743684, <a href="mailto:map@12">map@12</a> = 0.667110<br />
+2017-02-18 19:04:17 batch 20 train_auc = 0.771974, cv_auc = 0.746428, <a href="mailto:map@12">map@12</a> = 0.669090<br />
+2017-02-18 19:05:06 batch 25 train_auc = 0.776669, cv_auc = 0.748072, <a href="mailto:map@12">map@12</a> = 0.670730<br />
+2017-02-18 19:05:57 batch 30 train_auc = 0.780555, cv_auc = 0.749372, <a href="mailto:map@12">map@12</a> = 0.670810<br />
+2017-02-18 19:06:47 batch 35 train_auc = 0.782584, cv_auc = 0.750513, <a href="mailto:map@12">map@12</a> = 0.672070<br />
+2017-02-18 19:07:36 batch 40 train_auc = 0.784387, cv_auc = 0.751552, <a href="mailto:map@12">map@12</a> = 0.672830<br />
+2017-02-18 19:08:25 batch 45 train_auc = 0.787242, cv_auc = 0.752350, <a href="mailto:map@12">map@12</a> = 0.673350<br />
+2017-02-18 19:09:15 batch 50 train_auc = 0.789798, cv_auc = 0.752649, <a href="mailto:map@12">map@12</a> = 0.673850</p>
+</blockquote>
+<p>This gives us ~ 0.674. After applying leakage this changes to <strong>~0.68</strong> which is around <strong>50 place on leaderboard</strong>. Fitting took 9 minutes(incuding time for reading from disk). Awesome, isn’t it?</p>
+</div>
+<div id="conclusion" class="section level1">
+<h1>Conclusion</h1>
+<p>As we see, it is possible to achieve quite high results on large complex datasets with limited resources. Key components are:</p>
+<ol style="list-style-type: decimal">
+<li>Smart partitioning</li>
+<li>Features hashing (and feature interactions extraction)</li>
+<li>Online learning</li>
+</ol>
+<p>Another takeaway for me is very interesting general purpose machine learning method call <strong>Factorization Machines</strong> which allows to model feature interactions in a factorized way. More interesting it allows to <strong>learn interactions in a linear time</strong> (actually amortized linear). I will explore them in a next posts. Stay tuned!</p>
+</div>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/" title="Large data, feature hashing and online learning">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/" title="Matrix factorization for recommender systems">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-07-10-bench-wrmf/">Benchmarking different implementations of weighted-ALS matrix factorization</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/">Matrix factorization for recommender systems (part 2)</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/">Matrix factorization for recommender systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/r">r</a></li><li><a href="/tags/recommender-systems">recommender-systems</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        for(var all in MathJax.Hub.getAllJax()) {
+            all.SourceElement().parentNode.className += ' has-jax';
+
+        }
+    });
+    </script>
+
+  </body>
+</html>
+

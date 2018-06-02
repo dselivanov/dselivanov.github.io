@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]> <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]> <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]> <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <title>Large data, feature hashing and online learning  &middot; Data Science notes</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="HandheldFriendly" content="True">
+<meta name="MobileOptimized" content="320">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+<meta name="description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 1)" />
+
+<meta name="keywords" content="kaggle, data_table, big_data, online_learning, hashing_trick, ">
+
+
+<meta property="og:title" content="Large data, feature hashing and online learning  &middot; Data Science notes ">
+<meta property="og:site_name" content="Data Science notes"/>
+<meta property="og:url" content="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/" />
+<meta property="og:locale" content="en-us">
+
+
+<meta property="og:type" content="article" />
+<meta property="og:description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 1)"/>
+<meta property="og:article:published_time" content="2017-02-04T00:00:00Z" />
+<meta property="og:article:modified_time" content="2017-02-04T00:00:00Z" />
+
+  
+    
+<meta property="og:article:tag" content="kaggle">
+    
+<meta property="og:article:tag" content="data_table">
+    
+<meta property="og:article:tag" content="big_data">
+    
+<meta property="og:article:tag" content="online_learning">
+    
+<meta property="og:article:tag" content="hashing_trick">
+    
+  
+
+  
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:site" content="@dselivanov_" />
+<meta name="twitter:creator" content="@dselivanov_" />
+<meta name="twitter:title" content="Large data, feature hashing and online learning" />
+<meta name="twitter:description" content="Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 1)" />
+<meta name="twitter:url" content="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/" />
+<meta name="twitter:domain" content="/">
+  
+
+<script type="application/ld+json">
+  {
+    "@context": "http://schema.org",
+    "@type": "Article",
+    "headline": "Large data, feature hashing and online learning",
+    "author": {
+      "@type": "Person",
+      "name": "http://profiles.google.com/+?rel=author"
+    },
+    "datePublished": "2017-02-04",
+    "description": "Lessons learned from &#34;Outbrain Click Prediction&#34; kaggle competition (part 1)",
+    "wordCount": 3347
+  }
+</script>
+
+
+
+<link rel="canonical" href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/touch-icon-144-precomposed.png">
+<link rel="icon" href="/favicon.png">
+<meta name="generator" content="Hugo 0.21" />
+
+  <!--[if lt IE 9]>
+<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.2/html5shiv.js"></script>
+<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+
+
+    <link rel="stylesheet" href="/css/bootswatch/paper/bootstrap.min.css">
+
+
+<link rel="stylesheet" href="/css/font-awesome.min.css">
+<link rel="stylesheet" href="/css/style.css">
+
+
+  <link rel="stylesheet" href="/css/highlight/default.css">
+
+
+</head>
+<body class="map[name:paper]" data-ng-app="myapp" data-ng-controller="MyController" data-ng-mouseleave="MouseLeave($event)">
+    <header id="main-header">
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        
+          
+          <a class="navbar-brand-img" href="/">
+            <img alt="" src="">
+            
+          </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            
+            
+            <li class="">
+
+              <a href="/" >
+                
+                Blog
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/projects" >
+                
+                Projects
+              </a>
+            </li>
+            
+            <li class="">
+
+              <a href="/about" >
+                
+                About
+              </a>
+            </li>
+            
+          </ul>
+        </div>
+        
+      </div>
+    </nav>
+  </header>
+
+
+<div class="container">
+  <div class="row">
+    <div class="col-sm-9">
+      <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+  <div class="text-center">
+
+    <h1>Large data, feature hashing and online learning
+</h1>
+
+    <div class="metas">
+<small>
+  <i class="fa fa-calendar"></i>
+  <time datetime="2017-02-04">4 Feb, 2017</time>
+</small>
+
+
+  <small>
+    &middot; by Dmitriy Selivanov
+  
+  &middot; Read in about 16 min
+  &middot; (3347 words)
+</small>
+
+
+<div class="margin-10">
+  <i class="fa fa-tags"></i>
+  
+  <a href="/tags/kaggle" class="label label-primary">kaggle</a>
+  
+  <a href="/tags/data_table" class="label label-primary">data_table</a>
+  
+  <a href="/tags/big_data" class="label label-primary">big_data</a>
+  
+  <a href="/tags/online_learning" class="label label-primary">online_learning</a>
+  
+  <a href="/tags/hashing_trick" class="label label-primary">hashing_trick</a>
+  
+
+
+</div>
+<br>
+</div>
+
+  </div>
+</div>
+
+      <div class="content">
+  <p><strong>EDIT: Thanks for comments, I created repository with full end-to-end reproducible code. You can find it here - <a href="https://github.com/dselivanov/kaggle-outbrain" class="uri">https://github.com/dselivanov/kaggle-outbrain</a>.</strong></p>
+<p>Recently I participated in <a href="https://www.kaggle.com/c/outbrain-click-prediction">Outbrain Click Prediction</a> kaggle competition (and no, I won’t talk about crazy xgboost stacking and blending :-) ). Competition was interesting for me mainly because of 2 things:</p>
+<ol style="list-style-type: decimal">
+<li>Organizers provided a lot of data - around <strong>100gb</strong>. I like to solve problems efficiently, so initial main challenge for was to try to solve this on my laptop. In fact this is doable and I will descibe it (moreover, second place solution was done on laptop!).</li>
+<li>I hoped to earn “kaggle master”. For this I had to finish in top 11 teams. Unfortunately our team took <a href="https://www.kaggle.com/c/outbrain-click-prediction/leaderboard">13th</a> place. But this is also quite high position, and I want to share some ideas on how we managed to do this.</li>
+</ol>
+<div id="task" class="section level2">
+<h2>Task</h2>
+<p>In two words Outbrain is a platform which integrates to websites and shows some ads to visitors. Each block has 2-12 slots for ads. Train set consisted of ~17M events where customer clicked on one of the ads in such blocks. Goal was to <strong>rank</strong> ads accordingly and target was <span class="citation">[Mean Average Precision @12 ]</span>(<a href="https://www.kaggle.com/wiki/MeanAveragePrecision" class="uri">https://www.kaggle.com/wiki/MeanAveragePrecision</a>). But I think as a proxy many of teams optimized <em>logloss</em> and evaluated <em>AUC</em> on cross-validation.</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>As mentioned before, organizers provided <a href="https://www.kaggle.com/c/outbrain-click-prediction/data">several data files</a> with relational structure. While all files were useful, some of them contribute more. We will be interesting in following files:</p>
+<ol style="list-style-type: decimal">
+<li><code>clicks_train.csv.zip</code>, <code>clicks_test.csv.zip</code> - information about shown ads. Which advertisement identifiers <code>ad_id</code> outbrain presented for each <code>display_id</code> in ad block.</li>
+<li><code>events.csv.zip</code> - provides information on the <code>display_id</code> context</li>
+<li><code>promoted_content.csv.zip</code> - information about campaigns, advertisers and ids of the pages to which ad points.</li>
+<li><code>page_views.csv.zip</code> - the log of users visiting documents</li>
+</ol>
+<p>While most of the tables are small enough to fit in memory, the page views log (page_views.csv) is over 2 billion rows and 100GB uncompressed.</p>
+</div>
+<div id="libraries-and-tools" class="section level2">
+<h2>Libraries and tools</h2>
+<p>When you work with large amounts of data on a sinlge machine - your best friends should be UNIX command line utils and <code>data.table</code> package. Sparse matrices live in <code>Matrix</code> package. So our initial set will include:</p>
+<pre class="r"><code>set.seed(1)
+library(data.table)
+library(methods)
+library(Matrix)
+# like this sugar
+library(magrittr)</code></pre>
+<p>Also I want to introduce small wrapper on top of <code>data.table::fread()</code> which will read zipped files directly (without preliminary uznipping to disk):</p>
+<pre class="r"><code>fread_zip = function( file , ...) {
+  fn = basename(file)
+  # cut &quot;.zip&quot; suffix using substr
+  path = paste(&quot;unzip -p&quot;, file, substr(x = fn, 1, length(fn) - 4))
+  fread(path, ...)
+}</code></pre>
+<p>Also let’s parse <code>promo</code> and <code>clicks_train</code> files once and save them as serrialized R objects:</p>
+<pre class="r"><code>promo = fread_zip(&quot;~/projects/kaggle/outbrain/data/raw/promoted_content.csv.zip&quot;)
+setnames(promo, &#39;document_id&#39;, &#39;promo_document_id&#39;)
+saveRDS(promo, &quot;~/projects/kaggle/outbrain/data/promo.rds&quot;, compress = FALSE)
+
+clicks_train = fread_zip(&quot;~/projects/kaggle/outbrain/data/raw/clicks_train.csv.zip&quot;)
+saveRDS(clicks_train, &quot;~/projects/kaggle/outbrain/data/clicks_train.rds&quot;, compress = FALSE)</code></pre>
+</div>
+<div id="events" class="section level2">
+<h2>Events</h2>
+<p>Lets start with <code>events.csv</code> and file which contains core information about display context.</p>
+<pre class="r"><code>events = fread_zip(&quot;~/projects/kaggle/outbrain/data/raw/events.csv.zip&quot;)
+# several values in &quot;platform&quot; column has som bad values, so we need to remove these rows or convert to some value
+events[ , platform := as.integer(platform)]
+# I chose to convert them to most common value
+events[is.na(platform), platform := 1L]</code></pre>
+<p>Here is <strong>first trick</strong>. Since file is huge ( ~23M rows) and user ids <code>uuid</code> stored as strings, this will consume quite a lot of memory. Also such amount of string slows down R’s <code>gc()</code>. But we can hash these uuids into integers. Of course there will be some collisions, but if we will choose hashing range large enough, collision won’t affect result too much (I would say on this task they won’t hurt result at all). For hashing here I will use MurmurHash3 from <code>text2vec</code>. However this is not mandatory, you can create your own - for example take a look to <code>digest</code> package.</p>
+<pre class="r"><code>H_SIZE = 2**28
+events[, uuid := text2vec:::hasher(uuid, H_SIZE)]</code></pre>
+<p>Now we need to parse geo position. It is encoded in string and contais information about country, state and city. For the reasons described above we will also hash it. Reader should notice that hashing will be used a lot.</p>
+<pre class="r"><code>geo3 = strsplit(events$geo_location, &quot;&gt;&quot;, T) %&gt;% lapply(function(x) x[1:3]) %&gt;% simplify2array(higher = FALSE)
+events[, geo_location := text2vec:::hasher(geo_location, H_SIZE)]
+events[, country := text2vec:::hasher(geo3[1, ], H_SIZE)]
+events[, state   := text2vec:::hasher(geo3[2, ], H_SIZE)]
+events[, dma     := text2vec:::hasher(geo3[3, ], H_SIZE)]
+rm(geo3)</code></pre>
+<p>Mark events which are in train and test:</p>
+<pre class="r"><code>events[, train := display_id %in% unique(clicks_train$display_id)]</code></pre>
+<p>Since we are working with time-series, it worth to check how organizers split data into train and test sets. So for each event we will calculate day from the first event:</p>
+<pre class="r"><code>events[, day := as.integer((timestamp / 1000) / 60 / 60 / 24) ]
+saveRDS(events, &#39;~/projects/kaggle/outbrain/data/events.rds&#39;, compress = FALSE)</code></pre>
+<p>And check distribution:</p>
+<pre class="r"><code>library(ggplot2)
+train_test_distr = events[, .N, keyby = .(day, train)]
+ggplot(train_test_distr) + geom_bar(aes(x = day, y = N, fill = train), stat = &#39;identity&#39;)
+
+train_test_distr[, N_share := N / sum(N), keyby = .(day)]
+train_test_distr
+ggplot(train_test_distr) + 
+  geom_bar(aes(x = day, y = N_share, fill = train), stat = &#39;identity&#39;) + 
+  scale_y_continuous(breaks=seq(0, 1, 0.05))
+rm(train_test_distr)</code></pre>
+<p>As you can see test set consists of events from days 13-14 and fraction (15%) of events from previous day. In real life it make no sense to predict “past”… However we will stick to distribution which is dictated by organizers data split.</p>
+<pre class="r"><code>set.seed(1)
+events[, cv := TRUE]
+# leave 11-12 days for validation as well as 15% of events in days 1-10
+events[day &lt;= 10, cv := sample(c(FALSE, TRUE), .N, prob = c(0.85, 0.15), replace = TRUE), by = day]
+# sort by uuid - not imoprtant at this point. Why we are doing this will be explained below.
+setkey(events, uuid)
+# save events for future usage
+#saveRDS(events, &quot;~/projects/kaggle/outbrain/data/events2.rds&quot;, compress = FALSE)
+# also for now let&#39;s remove test events, since we will work with local cross validation data
+events = events[train == TRUE]</code></pre>
+<p>Let’s check check how much memory we use at the moment:</p>
+<pre class="r"><code>tables()</code></pre>
+<p>Around 2 gigs - any moderate laptop can hadle this. Even some smatrphones has 3-4 gb of ram :-)</p>
+<p>Now we are ready to build our first model.</p>
+</div>
+<div id="model-matrix" class="section level2">
+<h2>Model matrix</h2>
+<p>As we see, all our feature are categorial variables. Lets try to create model matrix on 1/50 subset of data - we will take only uuids where <code>uuid mod 50 = 0</code>. One important note here - we partition data by <code>uuid</code>, but in theory we can also partition by <code>display_id</code>, <code>ad_id</code>, etc. Readers will see why we choose to partition by <code>uuid</code> in subsequent sections.</p>
+<pre class="r"><code>N_PART = 50
+data_sample = events[uuid %% N_PART == 0]
+# join with clicks_train to get information about clicks and shown ads
+data_sample = clicks_train[data_sample, on = .(display_id = display_id)]
+data_sample = promo[data_sample, on = .(ad_id = ad_id)]
+object.size(data_sample) / 1e6</code></pre>
+<p>Since we joined all parts, we can cosntruct feature matrix. But is also not obvious - how to encode categorial variables? Common approach is to calculate number of unique values for each factor and use 1-hot encoding. Other ideas? <strong>Hashing</strong> - we will define size of hashing space and project values of our categorial varibles in this space. By varying size of the hashing space we can control number of collisions. Let’s see how to implement this:</p>
+<pre class="r"><code>create_feature_matrix = function(dt, features, h_space_size) {
+  # 0-based indices
+  row_index = rep(0L:(nrow(dt) - 1L), length(features))
+  # note that here we adding `text2vec:::hasher(feature, h_space_size)` - hash offset for this feature
+  # this reduces number of collisons because. If we won&#39;t apply such scheme - identical values of 
+  # different features will be hashed to same value
+  col_index = Map(function(feature) {
+     index = (text2vec:::hasher(feature, h_space_size) + dt[[feature]]) %% h_space_size
+     as.integer(index)
+   }, features) %&gt;% 
+    unlist(recursive = FALSE, use.names = FALSE)
+  
+  m = sparseMatrix(i = row_index, j = col_index, x = 1, 
+                   dims = c(nrow(dt), h_space_size), 
+                   index1 = FALSE, giveCsparse = FALSE, check = F)
+  m
+}
+
+h_space_size = 2**24
+feature_names = c(&quot;ad_id&quot;, &quot;promo_document_id&quot;, &quot;campaign_id&quot;, &quot;advertiser_id&quot;, &quot;document_id&quot;, 
+             &quot;platform&quot;, &quot;geo_location&quot;, &quot;country&quot;, &quot;state&quot;, &quot;dma&quot;)
+
+X_train = create_feature_matrix(data_sample[cv == FALSE], feature_names, h_space_size)
+y_train = as.numeric(data_sample[cv == FALSE, clicked])
+
+data_sample_cv = data_sample[cv == TRUE]
+X_cv = create_feature_matrix(data_sample[cv == TRUE], feature_names, h_space_size)
+y_cv = as.numeric(data_sample[cv == TRUE, clicked])
+
+str(X_train)
+object.size(X_train)/1e6</code></pre>
+<div id="note-on-memory-consuption" class="section level3">
+<h3>Note on memory consuption</h3>
+<p>And at this point it worth to think about how to solve such problem - model matrix with 1/50 of the dataset consumes ~ 200mb. Interpolating to full dataset - matrix will consume ~ 10gb. And this is already a problem for laptop with 16gb RAM. More interestingly it worth to point that at this moment model doesn’t contain any interactions between categorial variables, so prediction power is very limited! Moreover keep in mind that we have 100gb file of views… It becomes obvious that it will be hard to use batch algorithms which requires to kepp all data in RAM.</p>
+</div>
+<div id="note-on-algorithms-and-libraries" class="section level3">
+<h3>Note on algorithms and libraries</h3>
+<p>From my experience <strong>linear models</strong> work best on such wide high-dimensional sparse data sets. So xgboost (with tree booster) or RanomForest won’t work well. For such tasks I usually use <em>glmnet</em> package, it is also not ideal. For example on my laptop it can fit logistic regression with L1 penalty on matrix above (1/50 of data) for ~ 30 sec. But it consumes ~ <strong>5gb(!)</strong> of RAM. Also not that here we check only 10 values of regularization parameter <code>lambda</code> (100 by default).</p>
+<pre class="r"><code>glmnet_model = glmnet::glmnet(x = X_train, y = y_train, family = &#39;binomial&#39;, 
+                      thresh = 1e-3, nlambda = 10, type.logistic = &quot;modified.Newton&quot;)</code></pre>
+<p>Other interesting packages I’m aware of: <a href="https://github.com/kaneplusplus/pirls">pirls</a>, <a href="https://github.com/jaredhuling/oem">oem</a>, <a href="https://github.com/YaohuiZeng/biglasso">bigLasso</a> (does not support sparse matrices yet). But all of them are not well suited for us due to the size of the problem.</p>
+</div>
+<div id="online-learning" class="section level3">
+<h3>Online learning</h3>
+<p>It turns out that such large scale high dimensional problems can be efficiently solved in a streaming fashion with stochastic gradient descent. One notable example - <a href="https://github.com/JohnLangford/vowpal_wabbit">vowpal wabbit</a>.</p>
+<p>Good thing about SGD is that it requires <span class="math inline">\(O(1)\)</span> memory, but also vanilla SGD convergence rate heavily depends on learning rate. Fortunately it was well studied during recent years - it is used as optimization technique in <strong>all</strong> deep learning applications, used at internet scale ad prediction and so on.</p>
+<p>It turns out that using different learning rates for each feature (<em>adaptive learning rates</em>) accelerate convergence drastically. Initial method was <a href="https://en.wikipedia.org/wiki/Stochastic_gradient_descent#AdaGrad">AdaGrad</a> by <em>Duchi et al</em>. We will stick to article by <em>McMahan</em> which introduce state-of-the-art <a href="http://www.jmlr.org/proceedings/papers/v15/mcmahan11b/mcmahan11b.pdf">FTRL-Proximal</a> algorithm for solving logistic regression with elastic-net penalty. It is proven to be useful in <a href="https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf">industry</a> and recent <a href="https://www.kaggle.com/c/outbrain-click-prediction/discussion/25521">CTR kaggle competitions</a>.</p>
+</div>
+<div id="ftrl-proximal" class="section level3">
+<h3>FTRL proximal</h3>
+<div class="figure">
+<img src="https://raw.githubusercontent.com/dselivanov/FTRL/master/docs/FTRL_algo.png" alt="FTRLProximal" />
+<p class="caption">FTRLProximal</p>
+</div>
+<p>I won’t go into details about algorithm, reader can find details in papers above. I will focus on applying it to our problem. Honestrly speaking when I realized necessity of online algorithm, I started to search github for FTRL implementation. And for my surprise I found 3 implementations in R/C/Rcpp - 2 packages - <a href="https://github.com/yanyachen/rFTRLProximal">rFTRLProximal</a>, <a href="https://github.com/while/FTRLProximal">FTRLProximal</a> and <a href="https://github.com/wush978/FeatureHashing/blob/master/inst/ftprl.R">pure R implementation</a> in <a href="https://github.com/wush978/FeatureHashing">FeatureHashing</a> package (by the way this package allows to create hashed model matrices from data frames - all the stuff we did above manually).</p>
+<p>First I tried packages and both of them had some issues:</p>
+<ol style="list-style-type: decimal">
+<li><code>rFTRLProximal</code> didn’t containt possibility of incremental learning</li>
+<li><code>FTRLProximal</code> was surprisingly very slow on my sparse data</li>
+</ol>
+<p>Then I tried pure R solution from <code>FeatureHashing</code> which was also quite slow (which was not surprise. But it was faster than <code>FTRLProximal</code>!) After some profiling and refactoring I ended with quite fast pure R solution - you can <a href="https://gist.github.com/dselivanov/abac5aa6fb8b49a6338f7c492d2525e3">find it on my gist</a>.</p>
+<p>And of course during competitions I made a lot of experiments, so didn’t want to wait long minutes while algorithm will converge. So I rewrote it using <code>Rcpp</code> and <code>OpenMP</code>, added dropout <code>regularization</code> and <strong>I’m happy to present <a href="https://github.com/dselivanov/FTRL">FTRL package</a></strong>. Let me show it in action:</p>
+<pre class="r"><code># first need to isntall it
+devtools::install_github(&quot;dselivanov/FTRL&quot;)</code></pre>
+<pre class="r"><code>library(Matrix)
+library(methods)</code></pre>
+<pre class="r"><code>library(FTRL)
+# First of all need to convert matrix to row-sparse matrix
+X_train_csr = as(X_train, &quot;RsparseMatrix&quot;)
+X_cv_csr = as(X_cv, &quot;RsparseMatrix&quot;)
+# set up model
+ftrl = FTRL$new(alpha = 0.01, beta = 0.1, lambda = 20, l1_ratio = 1, dropout = 0)</code></pre>
+<p>As can be noticed <code>FTRL</code> expose <code>partial_fit()</code> method (I follow scikit-learn convention in API). So model can be updated with new data. Or we can fit several epochs on same mini-batch. Let’s check timings with different number of threads:</p>
+<pre class="r"><code># 1 thread
+system.time(ftrl$partial_fit(X = X_train_csr, y = y_train, nthread = 1))
+# 4 threads
+system.time(ftrl$partial_fit(X = X_train_csr, y = y_train, nthread = 4))
+# 4 threads + 4 hyperthreads
+system.time(ftrl$partial_fit(X = X_train_csr, y = y_train, nthread = 8))</code></pre>
+</div>
+<div id="baseline" class="section level3">
+<h3>Baseline</h3>
+<p>So now we are done with fast algorithm which can work on laptop. Let’s set up first baseline and put all together:</p>
+<pre class="r"><code>h_space_size = 2**24
+
+feature_names = c(&quot;ad_id&quot;, &quot;promo_document_id&quot;, &quot;campaign_id&quot;, &quot;advertiser_id&quot;, &quot;document_id&quot;, 
+             &quot;platform&quot;, &quot;geo_location&quot;, &quot;country&quot;, &quot;state&quot;, &quot;dma&quot;)
+
+X_cv = as(X_cv, &quot;RsparseMatrix&quot;)
+# regularization parameter lambda and learning rate alpha are important hyperparameters
+# should be defined after via cross-validation and grid-search
+ftrl = FTRL$new(alpha = 0.05, beta = 0.5, lambda = 1, l1_ratio = 1, dropout = 0)
+# iterate through all examples 
+i = 1
+for(i in 0:(N_PART - 1)) {
+  dt = events[uuid %% N_PART == i &amp; cv == FALSE]
+  dt = clicks_train[dt, on = .(display_id = display_id)]
+  dt = promo[dt, on = .(ad_id = ad_id)]
+  # create model matrix for a given chunk and convert it to CSR format
+  X_train = create_feature_matrix(dt, feature_names, h_space_size) %&gt;% 
+    as(&quot;RsparseMatrix&quot;)
+  y_train = as.numeric(dt[, clicked])
+  # update model
+  ftrl$partial_fit(X = X_train, y = y_train, nthread = 8)
+  # check target metric. Alternatively can check map@12
+  # but in our case it was 100% correlated with AUC
+  if(i %% 5 == 0) {
+    
+    train_auc = glmnet::auc(y_train, ftrl$predict(X_train))
+    p = ftrl$predict(X_cv)
+    dt_cv = data_sample_cv[, .(display_id, clicked, p = -p)]
+    # res[, p := -(p)]
+    setkey(dt_cv, display_id, p)
+    mean_map12 = dt_cv[ , .(map_12 = 1 / .Internal(which(clicked == 1))), by = display_id][[&#39;map_12&#39;]] %&gt;% 
+      mean %&gt;% round(5)
+    cv_auc = glmnet::auc(y_cv, p)
+    message(sprintf(&quot;batch %d train_auc = %f, cv_auc = %f, map@12 = %f&quot;,i, train_auc, cv_auc, mean_map12))
+  }
+}</code></pre>
+<blockquote>
+<p>batch 0 train_auc = 0.724088, cv_auc = 0.705939, <a href="mailto:map@12">map@12</a> = 0.633280<br />
+batch 5 train_auc = 0.731734, cv_auc = 0.717310, <a href="mailto:map@12">map@12</a> = 0.640460<br />
+batch 10 train_auc = 0.733199, cv_auc = 0.720263, <a href="mailto:map@12">map@12</a> = 0.642470<br />
+batch 15 train_auc = 0.734564, cv_auc = 0.721715, <a href="mailto:map@12">map@12</a> = 0.642940<br />
+batch 20 train_auc = 0.735819, cv_auc = 0.722822, <a href="mailto:map@12">map@12</a> = 0.643520<br />
+batch 25 train_auc = 0.736287, cv_auc = 0.723580, <a href="mailto:map@12">map@12</a> = 0.643700<br />
+batch 30 train_auc = 0.735885, cv_auc = 0.723975, <a href="mailto:map@12">map@12</a> = 0.643940<br />
+batch 35 train_auc = 0.736175, cv_auc = 0.724659, <a href="mailto:map@12">map@12</a> = 0.644270<br />
+batch 40 train_auc = 0.737990, cv_auc = 0.725010, <a href="mailto:map@12">map@12</a> = 0.644170<br />
+batch 45 train_auc = 0.737410, cv_auc = 0.725422, <a href="mailto:map@12">map@12</a> = 0.645230</p>
+</blockquote>
+<p>Along with <a href="https://www.kaggle.com/its7171/outbrain-click-prediction/leakage-solution">leak</a> it can bring us to ~150 position on leaderboard.</p>
+</div>
+<div id="baseline-2" class="section level3">
+<h3>Baseline 2</h3>
+<p>One useful thing is to save chunks to disk for further model tuning, so will save model matrix for each mini-batch with wrapper of <code>saveRDS</code> function:</p>
+<pre class="r"><code># by default saveRDS can save file with compression level = 6 - very slow
+# or without compression - large files.
+save_rds_compressed = function(x, file, compr_lvl = 1) {
+  con = gzfile(file, open = &quot;wb&quot;, compression = compr_lvl)
+  saveRDS(x, file = con)
+  close.connection(con)
+}</code></pre>
+<p>Obvious thing to try is to add feature intercations and check how it will improve our model. In order to add interaction we need to modify our <code>create_feature_matrix</code> function. Interactions can be modelled as <code>sum</code> of corresponding underlying features because same combinations of features will be projected into the same values.</p>
+<pre class="r"><code># now features will be a list of sets of features
+# single values will correspont to single original features, 
+# while sets of features will correspond to interactions
+# for example `features = list(&quot;platform&quot;, c(&quot;country&quot;, &quot;campaign_id&quot;) )`
+create_feature_matrix = function(dt, features,  h_space_size) {
+  # 0-based indices
+  row_index = rep(0L:(nrow(dt) - 1L), length(features))
+  # note that here we adding `text2vec:::hasher(feature, h_space_size)` - hash offset for this feature
+  # this reduces number of collisons because. If we won&#39;t apply such scheme - identical values of 
+  # different features will be hashed to same value
+  col_index = Map(function(fnames) {
+    # here we calculate offset for each feature
+    # hash name of feature to reduce number of collisions 
+    # because for eample if we won&#39;t hash value of platform=1 will be hashed to the same as advertiser_id=1
+    offset = text2vec:::hasher(paste(fnames, collapse = &quot;_&quot;), h_space_size)
+    # calculate index = offest + sum(feature values)
+    index = (offset + Reduce(`+`, dt[, fnames, with = FALSE])) %% h_space_size
+     as.integer(index)
+   }, features) %&gt;% 
+    unlist(recursive = FALSE, use.names = FALSE)
+
+  m = sparseMatrix(i = row_index, j = col_index, x = 1,
+                   dims = c(nrow(dt), h_space_size),
+                   index1 = FALSE, giveCsparse = FALSE, check = F)
+  m
+}</code></pre>
+<p>And know we can create model matrix with some interactions:</p>
+<pre class="r"><code>interactions = c(&#39;promo_document_id&#39;, &#39;campaign_id&#39;, &#39;advertiser_id&#39;, &#39;document_id&#39;, &#39;platform&#39;, &#39;country&#39;, &#39;state&#39;) %&gt;% 
+  combn(2, simplify = F)
+single_features = c(&#39;ad_id&#39;, &#39;campaign_id&#39;, &#39;advertiser_id&#39;, &#39;document_id&#39;, &#39;platform&#39;, &#39;geo_location&#39;, &#39;country&#39;, &#39;state&#39;, &#39;dma&#39;)
+
+features_with_interactions = c(single_features, interactions)
+h_space_size = 2**24
+
+data_sample_cv = data_sample[cv == TRUE]
+X_cv = create_feature_matrix(data_sample[cv == TRUE], features_with_interactions, h_space_size) %&gt;% 
+  as(&quot;RsparseMatrix&quot;)
+y_cv = as.numeric(data_sample[cv == TRUE, clicked])
+save_rds_compressed(list(x = X_cv, y = y_cv, 
+                 dt = data_sample_cv[, .(display_id, uuid, ad_id, promo_document_id, campaign_id, advertiser_id)]), 
+            file = &quot;~/projects/kaggle/outbrain/data/dt_cv_0.rds&quot;)</code></pre>
+<p>As we will see process of each batch will take ~ 15 seconds. However on subsequent runs it will be much faster, because we will read model matrix for each minibatch from disk.</p>
+<pre class="r"><code># will save mini-batches here
+events_matrix_dir = &quot;~/projects/kaggle/outbrain/data/events_matrix/&quot;
+dir.create(events_matrix_dir)
+# iterate through all examples 
+for(i in 0:(N_PART - 1)) {
+  dt = events[uuid %% N_PART == 0 &amp; cv == FALSE]
+  dt = clicks_train[dt, on = .(display_id = display_id)]
+  dt = promo[dt, on = .(ad_id = ad_id)]
+  setkey(dt, display_id, ad_id)
+  # create model matrix for a given chunk and convert it to CSR format
+  X_train = create_feature_matrix(dt, features_with_interactions, h_space_size) %&gt;% 
+    as(&quot;RsparseMatrix&quot;)
+  y_train = as.numeric(dt[, clicked])
+  # save file for further faster model tuning - we won&#39;t need to recalculate model matrix each time
+  # dt will be used in further steps to join with page views.
+  save_rds_compressed(list(x = X_train, y = y_train, 
+                 dt = dt[, .(uuid, ad_id, promo_document_id, campaign_id, advertiser_id)]), 
+            file = sprintf(&quot;%s/%d.rds&quot;, events_matrix_dir, i))
+  message(sprintf(&quot;%s batch %d&quot;, Sys.time(), i))
+}</code></pre>
+<blockquote>
+<p>2017-02-04 18:55:58 batch 0<br />
+2017-02-04 18:58:46 batch 10<br />
+2017-02-04 19:01:29 batch 20<br />
+2017-02-04 19:04:14 batch 30<br />
+2017-02-04 19:06:56 batch 40</p>
+</blockquote>
+<pre class="r"><code># regularization parameter lambda and learning rate alpha are important hyperparameters
+# should be defined after via cross-validation and grid-search
+ftrl = FTRL$new(alpha = 0.05, beta = 0.5, lambda = 1, l1_ratio = 1, dropout = 0)
+for(i in 0:(N_PART - 1)) {
+  data = readRDS(sprintf(&quot;%s/%d.rds&quot;, events_matrix_dir, i))
+  # update model
+  ftrl$partial_fit(X = data$x, y = data$y, nthread = 8)
+  # check target metric. Alternatively can check map@12
+  # but in our case it was 100% correlated with AUC
+  if(i %% 5 == 0) {
+    
+    train_auc = glmnet::auc(y_train, ftrl$predict(X_train))
+    p = ftrl$predict(X_cv)
+    dt_cv = data_sample_cv[, .(display_id, clicked, p = -p)]
+    setkey(dt_cv, display_id, p)
+    mean_map12 = dt_cv[ , .(map_12 = 1 / .Internal(which(clicked == 1))), by = display_id][[&#39;map_12&#39;]] %&gt;% 
+      mean %&gt;% round(5)
+    cv_auc = glmnet::auc(y_cv, p)
+    message(sprintf(&quot;%s batch %d train_auc = %f, cv_auc = %f, map@12 = %f&quot;, Sys.time(), i, train_auc, cv_auc, mean_map12))
+  }
+}</code></pre>
+<blockquote>
+<p>2017-02-04 19:23:41 batch 0 train_auc = 0.720479, cv_auc = 0.710925, <a href="mailto:map@12">map@12</a> = 0.635120<br />
+2017-02-04 19:23:58 batch 5 train_auc = 0.736508, cv_auc = 0.725156, <a href="mailto:map@12">map@12</a> = 0.645800<br />
+2017-02-04 19:24:13 batch 10 train_auc = 0.740824, cv_auc = 0.729285, <a href="mailto:map@12">map@12</a> = 0.648530<br />
+2017-02-04 19:24:28 batch 15 train_auc = 0.743680, cv_auc = 0.731567, <a href="mailto:map@12">map@12</a> = 0.650900<br />
+2017-02-04 19:24:44 batch 20 train_auc = 0.745372, cv_auc = 0.733235, <a href="mailto:map@12">map@12</a> = 0.651650<br />
+2017-02-04 19:25:00 batch 25 train_auc = 0.746855, cv_auc = 0.734358, <a href="mailto:map@12">map@12</a> = 0.652510<br />
+2017-02-04 19:25:15 batch 30 train_auc = 0.748017, cv_auc = 0.734902, <a href="mailto:map@12">map@12</a> = 0.652590<br />
+2017-02-04 19:25:31 batch 35 train_auc = 0.748976, cv_auc = 0.736185, <a href="mailto:map@12">map@12</a> = 0.653550<br />
+2017-02-04 19:25:48 batch 40 train_auc = 0.749709, cv_auc = 0.736798, <a href="mailto:map@12">map@12</a> = 0.653320<br />
+2017-02-04 19:26:03 batch 45 train_auc = 0.750500, cv_auc = 0.737207, <a href="mailto:map@12">map@12</a> = 0.654440</p>
+</blockquote>
+<p>Again, with leak (which add ~ 0.015) this will give score ~ 0.67 bring to ~ 90-100 position on leadderboard. Please, note time we spend for data preparation and model fitting - <strong>we were able to get into top 100 in 20-25 minutes on a laptop</strong>.</p>
+</div>
+</div>
+<div id="page-views" class="section level2">
+<h2>Page views</h2>
+<p>The most interesting file is <code>views.csv.zip</code> (100 gb of logs for customer visits!). I will describe on how to effectively incorporate information from it in next blog post. Stay tuned.</p>
+</div>
+
+</div>
+
+
+      <footer>
+  <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+      
+  
+    <nav><ul class="pager">
+    
+        <li class="previous">
+          <a href="/post/text2vec-0-4/" title="text2vec 0.4">
+            <span aria-hidden="true">&larr;</span>Previous
+          </a>
+        </li>
+    
+
+    
+      <li class="next">
+        <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/" title="Fitting logistic regression on 100gb dataset on a laptop">
+            Next <span aria-hidden="true">&rarr;</span>
+        </a>
+      </li>
+    
+    </ul> </nav>
+  
+
+
+</div>
+
+  <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+  
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+</div>
+
+</footer>
+
+    </div>
+    
+      <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+        <div>
+  
+
+    <div class="section">
+      <header><div class="title"><b>Latest Posts</b></div></header>
+      <div class="content">
+        <ul>
+        
+          <li>
+          <a href="/post/2017-07-10-bench-wrmf/">Benchmarking different implementations of weighted-ALS matrix factorization</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-06-28-matrix-factorization-for-recommender-systems-part-2/">Matrix factorization for recommender systems (part 2)</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-05-28-matrix-factorization-for-recommender-systems/">Matrix factorization for recommender systems</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-02-07-large-data-feature-hashing-and-online-learning-part-2/">Fitting logistic regression on 100gb dataset on a laptop</a>
+          </li>
+        
+          <li>
+          <a href="/post/2017-01-27-lessons-learned-from-outbrain-click-prediction-kaggle-competition/">Large data, feature hashing and online learning</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-4/">text2vec 0.4</a>
+          </li>
+        
+          <li>
+          <a href="/post/text2vec-0-3/">text2vec 0.3</a>
+          </li>
+        
+          <li>
+          <a href="/post/r-read-hdfs/">Read from hdfs with R. Brief overview of SparkR.</a>
+          </li>
+        
+          <li>
+          <a href="/post/fast-parallel-async-adagrad/">text2vec GloVe implementation details</a>
+          </li>
+        
+          <li>
+          <a href="/post/glove-enwiki/">GloVe vs word2vec revisited.</a>
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+
+    
+      
+      
+      <div class="section taxonomies">
+        <header><div class="title"><b>tag</b></div></header>
+
+        <div class="content">
+          <ul>
+            <li><a href="/tags/text2vec">text2vec</a></li><li><a href="/tags/data_table">data_table</a></li><li><a href="/tags/r">r</a></li><li><a href="/tags/recommender-systems">recommender-systems</a></li><li><a href="/tags/big_data">big_data</a></li><li><a href="/tags/glove">glove</a></li><li><a href="/tags/hashing_trick">hashing_trick</a></li><li><a href="/tags/kaggle">kaggle</a></li><li><a href="/tags/online_learning">online_learning</a></li><li><a href="/tags/setup">setup</a></li>
+          </ul>
+        </div>
+      </div>
+      
+    
+      
+      
+    
+
+</div>
+
+      </div>
+    
+  </div>
+</div>
+      
+<footer class="footer hidden-print">
+  <div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+           <div class="pull-left">
+  <a class="toplink" href="javascript:" id="return-to-top">back to top</a>
+</div>
+<div class="pull-right">
+
+</div>
+
+        </div>
+        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 text-center">
+              
+    
+<div class="container footline">
+    <small>
+</small>
+</div>
+
+
+    
+
+
+        </div>
+    </div>
+  </div>
+</footer>
+
+    
+
+<script src="/js/jquery.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.9/angular.min.js"></script>
+<script src="/js/popover/angular-storage.min.js"></script>
+
+
+<script type="text/javascript">
+  (function() {
+    
+    
+    if (window.location.hostname == "localhost")
+      return;
+
+    var dsq = document.createElement('script'); dsq.async = true; dsq.type = 'text/javascript';
+    dsq.src = '//dselivanov.disqus.com/count.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+  })();
+  $('#return-to-top').click(function() {      
+    $('body,html').animate({
+        scrollTop : 0                       
+    }, 500);
+});
+</script>
+
+
+<script src="/js/highlight.pack.js"></script>
+<script src="/js/site.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+<script>
+  var _gaq=[['_setAccount','UA-56994099-1'],['_trackPageview']];
+  (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+  g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g,s)}(document,'script'));
+</script>
+
+<script>
+var ENABLE_POPOVER = ""; 
+var EXPIRE_COOKIE = ""; 
+var SHOW_MODAL_TIMEOUT = ""; 
+var MOUSE_LEAVE = ""; 
+var MODAL_SIZE = ""; 
+var POST_URL = ""; 
+var SIGNUP_HEADER = "";
+var HEADER_IMAGE = "";
+var IMG_DESCRIPTION = "";
+var SIGNUP_TEXT = "";
+var INPUT_PLACEHOLDER = "";
+var SUBMIT_BUTTON = "";
+var SUCCESS_MESSAGE = "";
+var ERROR_MESSAGE = "";
+var OPTIN = "";
+var COOKIE_NAME = "";
+</script>
+<script src="/js/popover/angular-modal-service.min.js"></script>
+<script src="/js/angular-ismobile.min.js"></script>
+<script src="/js/popover/popover.min.js"></script>
+
+    
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\[','\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+        TeX: { equationNumbers: { autoNumber: "AMS" },
+             extensions: ["AMSmath.js", "AMSsymbols.js"] }
+      }
+    });
+    </script>
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Queue(function() {
+        for(var all in MathJax.Hub.getAllJax()) {
+            all.SourceElement().parentNode.className += ' has-jax';
+
+        }
+    });
+    </script>
+
+  </body>
+</html>
+
