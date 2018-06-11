@@ -13,7 +13,6 @@ keywords:
   - implicit feedback
 type: post
 mathjax: true
-classoption: aspectratio=169
 ---
 
 Generally speaking the task for a recommender system is not to make up-sale. The real task is to keep customers engaged in your service. With loyal customers, you can monetize your service.
